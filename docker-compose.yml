@@ -1,9 +1,9 @@
 # Menjalankan image hasil GitHub Actions.
-#   OWNER=<username-github> TAG=main-20261111 docker compose up -d
+#   OWNER=<username-github> TAG=main-20261111-143052 docker compose up -d
 # Lalu buka http://localhost:8080
 services:
   dashboard-api:
-    image: ghcr.io/${OWNER:?isi OWNER dengan username GitHub}/dashboard-api:${TAG:?isi TAG, mis. main-20261111}
+    image: ghcr.io/${OWNER:?isi OWNER dengan username GitHub}/dashboard-api:${TAG:?isi TAG, mis. main-20261111-143052}
     restart: unless-stopped
 
   dashboard-web:

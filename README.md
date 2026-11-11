@@ -63,20 +63,20 @@ Backend akan menyajikan `frontend/dist` sekaligus API di http://localhost:3000.
 ## CI/CD: GitHub Actions ke GitHub Packages
 
 Workflow [.github/workflows/docker-publish.yml](.github/workflows/docker-publish.yml) berjalan setiap push ke
-`main` atau `master` (atau manual lewat tab Actions → Run workflow), lalu mendorong dua image ke GitHub Container Registry:
+`master` (atau manual lewat tab Actions → Run workflow), lalu mendorong dua image ke GitHub Container Registry:
 
 | Package | Isi | Tag |
 |---|---|---|
-| `ghcr.io/<owner>/dashboard-web` | Frontend (Nginx) | `main-YYYYMMDD` |
-| `ghcr.io/<owner>/dashboard-api` | Backend (Bun + Elysia + SQLite) | `main-YYYYMMDD` |
+| `ghcr.io/<owner>/dashboard-web` | Frontend (Nginx) | `main-YYYYMMDD-HHMMSS` |
+| `ghcr.io/<owner>/dashboard-api` | Backend (Bun + Elysia + SQLite) | `main-YYYYMMDD-HHMMSS` |
 
-Tanggal memakai WIB. Push kedua di hari yang sama akan menimpa tag hari itu.
+Tanggal dan waktu memakai WIB, misalnya `main-20261111-143052`. Setiap push menghasilkan tag baru.
 Tidak perlu secret tambahan karena workflow memakai `GITHUB_TOKEN` bawaan.
 
 Menjalankan image dari registry:
 
 ```bash
-OWNER=<username-github> TAG=main-20261111 docker compose up -d
+OWNER=<username-github> TAG=main-20261111-143052 docker compose up -d
 ```
 
 Buka http://localhost:8080. Container web meneruskan `/api` ke `dashboard-api:3000`

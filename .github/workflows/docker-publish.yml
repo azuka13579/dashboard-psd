@@ -1,9 +1,9 @@
 name: Build & Publish Docker Images
 
 # Hasil:
-#   ghcr.io/<owner>/dashboard-web:main-YYYYMMDD   (frontend)
-#   ghcr.io/<owner>/dashboard-api:main-YYYYMMDD   (backend)
-# Tanggal memakai zona waktu WIB (Asia/Jakarta).
+#   ghcr.io/<owner>/dashboard-web:main-YYYYMMDD-HHMMSS   (frontend)
+#   ghcr.io/<owner>/dashboard-api:main-YYYYMMDD-HHMMSS   (backend)
+# Tanggal dan waktu memakai zona waktu WIB (Asia/Jakarta). Kedua image selalu mendapat tag yang sama.
 
 on:
   push:
@@ -19,8 +19,18 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Timestamp dihitung sekali agar tag FE dan BE identik
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.ts.outputs.tag }}
+    steps:
+      - id: ts
+        run: echo "tag=main-$(TZ=Asia/Jakarta date +%Y%m%d-%H%M%S)" >> "$GITHUB_OUTPUT"
+
   build:
     name: ${{ matrix.package }}
+    needs: prepare
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -41,9 +51,8 @@ jobs:
         id: vars
         run: |
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          DATE=$(TZ=Asia/Jakarta date +%Y%m%d)
           echo "image=ghcr.io/${OWNER}/${{ matrix.package }}" >> "$GITHUB_OUTPUT"
-          echo "tag=main-${DATE}" >> "$GITHUB_OUTPUT"
+          echo "tag=${{ needs.prepare.outputs.tag }}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
