@@ -1,0 +1,59 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+/*
+  Palet: 3 warna utama
+  - navy  (#0F2A44 ... #2D5F96)  : identitas, teks utama, zona Lembap-Berawan
+  - biru  (#4096D8)              : aksen interaktif, zona Sejuk-Cerah
+  - amber (#B97600)              : suhu/panas, zona Panas-Kering
+  ditambah netral abu-abu untuk permukaan dan teks sekunder.
+*/
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-navy-950: #0a1d30;
+  --color-navy-900: #0f2a44;
+  --color-navy-800: #173a5c;
+  --color-navy-700: #2d5f96;
+  --color-sky-600: #2f7fc0;
+  --color-sky-500: #4096d8;
+  --color-sky-100: #e3effa;
+  --color-sky-50: #f1f7fd;
+  --color-amber-700: #8f5b00;
+  --color-amber-600: #b97600;
+  --color-amber-100: #f7ebd2;
+  --color-amber-50: #fbf5e8;
+
+  --color-ink: #13202e;
+  --color-ink-2: #4b5a6a;
+  --color-ink-3: #7a8796;
+  --color-line: #e2e7ed;
+  --color-surface: #ffffff;
+  --color-canvas: #f4f6f9;
+}
+
+html, body, #root { min-height: 100%; }
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+.leaflet-container { font-family: var(--font-sans); background: #eef2f6; }
+.leaflet-container:focus { outline: none; }
+.leaflet-container:focus-visible { outline: 2px solid var(--color-sky-500); outline-offset: 1px; }
+.leaflet-tooltip.map-tip {
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgb(15 42 68 / 0.12);
+  padding: 6px 9px;
+  font-size: 12px;
+  color: var(--color-ink);
+}
+.leaflet-tooltip.map-tip::before { display: none; }
+
+select, input { font: inherit; }
