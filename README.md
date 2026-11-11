@@ -63,7 +63,7 @@ Backend akan menyajikan `frontend/dist` sekaligus API di http://localhost:3000.
 ## CI/CD: GitHub Actions ke GitHub Packages
 
 Workflow [.github/workflows/docker-publish.yml](.github/workflows/docker-publish.yml) berjalan setiap push ke
-`main` (atau manual lewat tab Actions → Run workflow), lalu mendorong dua image ke GitHub Container Registry:
+`main` atau `master` (atau manual lewat tab Actions → Run workflow), lalu mendorong dua image ke GitHub Container Registry:
 
 | Package | Isi | Tag |
 |---|---|---|
