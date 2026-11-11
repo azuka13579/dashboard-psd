@@ -26,7 +26,7 @@ jobs:
       tag: ${{ steps.ts.outputs.tag }}
     steps:
       - id: ts
-        run: echo "tag=main-$(TZ=Asia/Jakarta date +%Y%m%d-%H%M%S)" >> "$GITHUB_OUTPUT"
+        run: echo "tag=main-$(TZ=Asia/Jakarta date +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
 
   build:
     name: ${{ matrix.package }}
