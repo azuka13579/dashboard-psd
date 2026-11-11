@@ -144,7 +144,7 @@ export default function Overview() {
             </h1>
             <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-white/75">
               Dashboard ini mengelompokkan {data.preprocessing.n_akhir.toLocaleString("id-ID")} kecamatan di {meta.n_provinsi} provinsi
-              berdasarkan kondisi cuaca aktual, memetakan persebarannya, dan memperkirakan kondisi cuaca di lokasi mana pun
+              berdasarkan kondisi cuaca aktual, memetakan persebarannya, dan memperkirakan kondisi cuaca di lokasi tertentu
               melalui interpolasi spasial.
             </p>
             <div className="mt-6 flex flex-wrap gap-2 text-xs">
