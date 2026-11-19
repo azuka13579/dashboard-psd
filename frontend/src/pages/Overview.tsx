@@ -152,15 +152,10 @@ export default function Overview() {
   return (
     <div className="space-y-10">
       <div>
-        {/* <PageHeader
+        <PageHeader
           title="Zonasi Iklim Mikro Kecamatan di Indonesia"
-          desc={
-            <>
-              Pengelompokan {pre.n_akhir.toLocaleString("id-ID")} kecamatan di {meta.n_provinsi} provinsi berdasarkan kondisi cuaca aktual
-              menggunakan K-Means Clustering, dilengkapi peta persebaran dan estimasi cuaca di lokasi tertentu melalui interpolasi spasial IDW.
-            </>
-          }
-        /> */}
+       
+        />
         <div className="mb-4">
           <KpiStrip
             items={[

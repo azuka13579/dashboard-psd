@@ -29,11 +29,10 @@ export default function Dashboard() {
   return (
     <div className="space-y-10">
       <div>
-        {/* <PageHeader
+        <PageHeader
           flush
           title="Dashboard Cuaca Kecamatan"
-          desc="Pilih provinsi dan metrik untuk menyaring peta, ringkasan, peringkat, dan insight. Klik titik mana pun di peta untuk memperkirakan cuaca di lokasi tersebut."
-        /> */}
+        />
 
         {/* Filter bar: tetap terlihat saat menggulir */}
         <div className="bleed-surface z-[1100] mb-4 border-b border-line py-2.5 shadow-[0_1px_0_var(--color-line)] md:sticky md:top-14">

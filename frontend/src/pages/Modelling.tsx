@@ -131,24 +131,40 @@ export default function Modelling() {
         <p>Seluruh kolom sudah terisi pada data revisi, sehingga tidak ada imputasi. Kolom {code("rentang_suhu")} dihitung ulang dari suhu maksimum dikurangi suhu minimum.</p>
       ),
     },
-    ...(pre.desimal_diperbaiki
+    ...(pre.perbaikan_koordinat
       ? [
           {
-            title: "Perbaikan format desimal koordinat",
-            result: `${pre.desimal_diperbaiki} lintang dipulihkan`,
+            title: "Perbaikan format angka koordinat",
+            result: `${((pre.perbaikan_koordinat.format ?? 0) + (pre.perbaikan_koordinat.baru ?? 0)).toLocaleString("id-ID")} koordinat dipulihkan`,
             body: (
               <div className="space-y-3">
                 <p>
-                  Pada file revisi, lintang kecamatan di sekitar khatulistiwa kehilangan angka nol di depan koma sehingga nilainya menjadi 10, 100,
-                  atau 1.000 kali lipat. Titiknya bergeser ratusan kilometer, sebagian bahkan ke luar wilayah Indonesia. Baris yang lintangnya
-                  tepat kelipatan 10ⁿ dari versi awal dipulihkan ke nilai semula, lalu ikut diperiksa pada langkah validasi koordinat.
+                  Pada file revisi, sebagian koordinat rusak format: angka 0 tersisip (109,5187 menjadi 100,95187), nilai menjadi 10ⁿ kali lipat
+                  (0,975 menjadi 9,75), atau koma hilang (-7,725 menjadi -7725). Untuk setiap baris dibuat kandidat nilai asli, lalu:
                 </p>
-                {pre.contoh_desimal && (
+                <ul className="list-disc space-y-1 pl-5">
+                  <li>
+                    <b className="font-semibold text-ink">{(pre.perbaikan_koordinat.format ?? 0).toLocaleString("id-ID")} baris hanya rusak format.</b>{" "}
+                    Kandidatnya cocok dengan versi awal, sehingga nilai versi awal yang dipakai.
+                  </li>
+                  <li>
+                    <b className="font-semibold text-ink">{(pre.perbaikan_koordinat.baru ?? 0).toLocaleString("id-ID")} baris berisi koordinat baru.</b>{" "}
+                    Dipilih pasangan kandidat di dalam wilayah Indonesia yang paling dekat ke pusat kabupatennya.
+                  </li>
+                  <li>
+                    {(pre.perbaikan_koordinat.sama ?? 0).toLocaleString("id-ID")} baris tidak berubah dari versi awal.
+                  </li>
+                </ul>
+                {pre.contoh_koordinat && (
                   <Table
                     dense
-                    head={["Kecamatan", "Lintang di file", "Lintang dipulihkan"]}
-                    align={["l", "r", "r"]}
-                    rows={pre.contoh_desimal.map((r) => [r.kecamatan, fmt(r.sebelum, 4), fmt(r.sesudah, 4)])}
+                    head={["Kecamatan", "Jenis", "Nilai di file", "Hasil pemulihan"]}
+                    rows={pre.contoh_koordinat.map((r) => [
+                      r.kecamatan,
+                      r.status === "baru" ? "Koordinat baru" : "Rusak format",
+                      <span className="tabular">{r.mentah}</span>,
+                      <span className="tabular">{r.hasil.replace(/\./g, ",")}</span>,
+                    ])}
                   />
                 )}
               </div>
@@ -234,10 +250,9 @@ export default function Modelling() {
   return (
     <div className="space-y-10">
       <div>
-      {/* <PageHeader
+      <PageHeader
         title="Preprocessing & Modelling"
-        desc="Penyiapan data dan pembentukan zona iklim dengan K-Means. Seluruh proses dijalankan di notebook notebooks/clustering.ipynb, lalu hasilnya disimpan ke SQLite."
-      /> */}
+      />
       <div>
         <KpiStrip
           items={[

@@ -31,8 +31,8 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 from sklearn.neighbors import BallTree
 
-RAW = Path('../Data hujan benar.csv')   # data utama (koordinat versi revisi)
-REF = Path('../Data hujan.csv')         # data versi awal, dipakai untuk memulihkan format desimal koordinat
+RAW = Path('../Data hujan benar 2.csv')  # data utama (koordinat versi revisi kedua)
+REF = Path('../Data hujan.csv')          # data versi awal, acuan untuk memulihkan format angka koordinat
 OUT = Path('../backend/data'); OUT.mkdir(parents=True, exist_ok=True)
 RANDOM_STATE = 42
 plt.rcParams['figure.figsize'] = (10, 4)
@@ -43,6 +43,7 @@ code("""
 # File memakai pemisah koma; koordinat ditulis dengan desimal koma di dalam tanda kutip.
 df_raw = pd.read_csv(RAW, encoding='utf-8-sig', dtype={'lat_asli': str, 'lng_asli': str})
 df_raw = df_raw.rename(columns={'lat_asli': 'latitude', 'lng_asli': 'longitude'})
+coord_raw = df_raw[['id_kecamatan', 'latitude', 'longitude']].copy()  # teks asli, dipakai saat perbaikan koordinat
 for c in ['latitude', 'longitude']:
     df_raw[c] = df_raw[c].str.replace(',', '.', regex=False).astype(float)
 # rentang_suhu tidak tersedia di file ini, dihitung ulang dari suhu maksimum - minimum
@@ -117,23 +118,66 @@ for c in log['missing_sebelum']:
         df[c] = df[c].fillna(df[c].median())
 log['missing_sesudah'] = int(df.isna().sum().sum())
 
-# 3.2b Perbaikan format desimal koordinat.
-#      Pada file revisi, lintang kecamatan di sekitar khatulistiwa (|lat| < ~1,1) kehilangan angka nol
-#      di depan koma sehingga bernilai 10x, 100x, atau 1000x lipat (mis. 0,975 -> 9,75).
-#      Baris yang lintangnya tepat kelipatan 10^n dari versi awal dipulihkan.
-ref = pd.read_csv(REF, sep=';', decimal=',', encoding='utf-8-sig')[['id_kecamatan', 'latitude']]
-_m = df[['id_kecamatan', 'latitude']].merge(ref, on='id_kecamatan', how='left', suffixes=('', '_ref'))
-_ratio = _m.latitude / _m.latitude_ref
-_fix = (_m.latitude_ref.notna() & (_m.latitude_ref != 0)
-        & np.isclose(_ratio, np.round(_ratio), atol=1e-6) & _ratio.round().isin([10, 100, 1000, 10000])).values
-df.loc[_fix, 'latitude'] = _m.loc[_fix, 'latitude_ref'].values
-log['desimal_diperbaiki'] = int(_fix.sum())
-log['contoh_desimal'] = [
-    {'kecamatan': k, 'sebelum': float(a), 'sesudah': float(b)}
-    for k, a, b in zip(df.loc[_fix, 'kecamatan'].head(5), _m.loc[_fix, 'latitude'].head(5), _m.loc[_fix, 'latitude_ref'].head(5))
-]
-print('Lintang dipulihkan:', _fix.sum())
-df_raw.loc[_fix, 'latitude'] = df.loc[_fix, 'latitude'].values
+# 3.2b Perbaikan format angka koordinat.
+#      Pada file revisi, sebagian koordinat rusak format: angka 0 tersisip (109,5187 -> 100,95187),
+#      nilai menjadi 10^n kali lipat (0,975 -> 9,75), atau koma hilang (-7,725 -> -7725).
+#      Untuk setiap baris dibuat kandidat nilai asli (nilai mentah, dibagi 10^n, atau satu angka 0 dibuang).
+#      (a) Bila kandidat cocok dengan versi awal -> hanya rusak format, nilai versi awal dipakai.
+#      (b) Bila tidak -> koordinat baru hasil koreksi; dipilih pasangan kandidat di dalam wilayah Indonesia
+#          yang paling dekat ke pusat kabupatennya (nilai mentah diutamakan, kandidat perbaikan diberi penalti).
+LAT_RANGE, LON_RANGE = (-11.5, 6.5), (94.5, 141.5)
+
+def kandidat(s):
+    s = str(s).strip(); sign = -1 if s.startswith('-') else 1
+    body = s.lstrip('-'); v = float(body.replace(',', '.'))
+    out = {v} | {v / k for k in (10, 100, 1000, 10000)}
+    dg = body.replace(',', '')
+    for i, ch in enumerate(dg):
+        if ch == '0':
+            d = dg[:i] + dg[i + 1:]
+            out |= {float(d[:p] + '.' + d[p:]) for p in (1, 2, 3) if p < len(d)}
+    return [sign * c for c in out]
+
+ref = pd.read_csv(REF, sep=';', decimal=',', encoding='utf-8-sig')[['id_kecamatan', 'latitude', 'longitude']]
+_m = coord_raw.merge(ref, on='id_kecamatan', how='left', suffixes=('_raw', ''))
+_m['kab'] = _m.id_kecamatan // 1000
+_m['provinsi'] = df.provinsi.values
+_rl = _m.latitude_raw.str.replace(',', '.').astype(float)
+_rn = _m.longitude_raw.str.replace(',', '.').astype(float)
+_same = ((_rl - _m.latitude).abs() < 1e-4) & ((_rn - _m.longitude).abs() < 1e-4)
+_kl, _kn, _kc = (_m[_same].groupby('kab').latitude.median(), _m[_same].groupby('kab').longitude.median(), _m[_same].groupby('kab').size())
+_pl, _pn = _m[_same].groupby('provinsi').latitude.median(), _m[_same].groupby('provinsi').longitude.median()
+
+def pulihkan(r):
+    la = [c for c in kandidat(r.latitude_raw) if LAT_RANGE[0] <= c <= LAT_RANGE[1]]
+    lo = [c for c in kandidat(r.longitude_raw) if LON_RANGE[0] <= c <= LON_RANGE[1]]
+    if not la or not lo:
+        return np.nan, np.nan, 'gagal'
+    rl, rn = float(r.latitude_raw.replace(',', '.')), float(r.longitude_raw.replace(',', '.'))
+    if pd.notna(r.latitude) and any(abs(c - r.latitude) < 1e-4 for c in la) and any(abs(c - r.longitude) < 1e-4 for c in lo):
+        berubah = abs(rl - r.latitude) > 1e-4 or abs(rn - r.longitude) > 1e-4
+        return r.latitude, r.longitude, ('format' if berubah else 'sama')
+    pakai_kab = _kc.get(r.kab, 0) >= 3
+    tl = _kl[r.kab] if pakai_kab else _pl.get(r.provinsi, np.mean(LAT_RANGE))
+    tn = _kn[r.kab] if pakai_kab else _pn.get(r.provinsi, np.mean(LON_RANGE))
+    a, b = min(((a, b) for a in la for b in lo),
+               key=lambda p: np.hypot(p[0] - tl, p[1] - tn) + 0.5 * (abs(p[0] - rl) > 1e-9) + 0.5 * (abs(p[1] - rn) > 1e-9))
+    return a, b, 'baru'
+
+_res = [pulihkan(r) for r in _m.itertuples()]
+_m['lat_fix'] = [x[0] for x in _res]; _m['lon_fix'] = [x[1] for x in _res]; _m['status'] = [x[2] for x in _res]
+df['latitude'] = _m.lat_fix.values; df['longitude'] = _m.lon_fix.values
+df_raw['latitude'] = _m.lat_fix.values; df_raw['longitude'] = _m.lon_fix.values
+log['perbaikan_koordinat'] = {k: int(v) for k, v in _m.status.value_counts().items()}
+log['desimal_diperbaiki'] = int((_m.status == 'format').sum())
+
+def _contoh(status, n):
+    sub = _m[_m.status == status].head(n)
+    return [{'kecamatan': k, 'status': status, 'mentah': f'{a}; {b}', 'hasil': f'{c:.4f}; {d:.4f}'}
+            for k, a, b, c, d in zip(df.loc[sub.index, 'kecamatan'], sub.latitude_raw, sub.longitude_raw, sub.lat_fix, sub.lon_fix)]
+log['contoh_koordinat'] = _contoh('format', 4) + _contoh('baru', 4)
+df = df[df.latitude.notna() & df.longitude.notna()].reset_index(drop=True)
+print('Status koordinat:', log['perbaikan_koordinat'])
 
 # 3.3 Validasi koordinat: sebagian kecamatan salah geocoding (mis. kecamatan Cirebon jatuh di Sumatera).
 #     Titik dianggap anomali jika (a) tidak satu pun dari 10 tetangga terdekatnya berasal dari provinsi

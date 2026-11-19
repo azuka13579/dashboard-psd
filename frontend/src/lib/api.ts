@@ -29,7 +29,8 @@ export type Meta = {
     koordinat_anomali: number;
     koordinat_anomali_aturan?: { provinsi: number; kabupaten: number };
     desimal_diperbaiki?: number;
-    contoh_desimal?: { kecamatan: string; sebelum: number; sesudah: number }[];
+    perbaikan_koordinat?: { sama?: number; format?: number; baru?: number; gagal?: number };
+    contoh_koordinat?: { kecamatan: string; status: string; mentah: string; hasil: string }[];
     koordinat_anomali_per_provinsi: Record<string, number>;
     contoh_anomali: { provinsi: string; kecamatan: string; latitude: number; longitude: number }[];
     outlier_iqr: Record<string, number>;
