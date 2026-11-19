@@ -234,10 +234,10 @@ export default function Modelling() {
   return (
     <div className="space-y-10">
       <div>
-      <PageHeader
+      {/* <PageHeader
         title="Preprocessing & Modelling"
         desc="Penyiapan data dan pembentukan zona iklim dengan K-Means. Seluruh proses dijalankan di notebook notebooks/clustering.ipynb, lalu hasilnya disimpan ke SQLite."
-      />
+      /> */}
       <div>
         <KpiStrip
           items={[
