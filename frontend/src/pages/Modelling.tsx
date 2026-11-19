@@ -442,7 +442,6 @@ export default function Modelling() {
             </div>
           </div>
         </Panel>
-       
       </Section>
     </div>
   );

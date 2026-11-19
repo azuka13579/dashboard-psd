@@ -20,7 +20,7 @@ export default function Layout() {
       <header className="sticky top-0 z-[1200] h-14 border-b border-white/10 bg-navy-950 text-white">
         <div className="mx-auto flex h-full max-w-[1400px] items-center gap-4 px-4 sm:px-6 lg:gap-8">
           <NavLink to="/" className="flex shrink-0 items-center gap-2.5">
-            <span className="hidden whitespace-nowrap text-[14px] font-bold sm:inline">Zonasi Iklim Kecamatan</span>
+            <span className="hidden whitespace-nowrap text-[14px] font-bold sm:inline">Dashboard Cuaca di Indonesia</span>
           </NavLink>
           <nav className="flex h-full gap-1 overflow-x-auto">
             {NAV.map((n) => (
