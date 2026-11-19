@@ -28,8 +28,8 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-10">
-      {/* <div>
-        <PageHeader
+      <div>
+        {/* <PageHeader
           flush
           title="Dashboard Cuaca Kecamatan"
           desc="Pilih provinsi dan metrik untuk menyaring peta, ringkasan, peringkat, dan insight. Klik titik mana pun di peta untuk memperkirakan cuaca di lokasi tersebut."
