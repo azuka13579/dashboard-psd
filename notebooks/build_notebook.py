@@ -31,7 +31,8 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 from sklearn.neighbors import BallTree
 
-RAW = Path('../Data hujan.csv')
+RAW = Path('../Data hujan benar.csv')   # data utama (koordinat versi revisi)
+REF = Path('../Data hujan.csv')         # data versi awal, dipakai untuk memulihkan format desimal koordinat
 OUT = Path('../backend/data'); OUT.mkdir(parents=True, exist_ok=True)
 RANDOM_STATE = 42
 plt.rcParams['figure.figsize'] = (10, 4)
@@ -39,7 +40,14 @@ plt.rcParams['figure.figsize'] = (10, 4)
 
 md("## 1. Data Overview")
 code("""
-df_raw = pd.read_csv(RAW, sep=';', decimal=',', encoding='utf-8-sig')
+# File memakai pemisah koma; koordinat ditulis dengan desimal koma di dalam tanda kutip.
+df_raw = pd.read_csv(RAW, encoding='utf-8-sig', dtype={'lat_asli': str, 'lng_asli': str})
+df_raw = df_raw.rename(columns={'lat_asli': 'latitude', 'lng_asli': 'longitude'})
+for c in ['latitude', 'longitude']:
+    df_raw[c] = df_raw[c].str.replace(',', '.', regex=False).astype(float)
+# rentang_suhu tidak tersedia di file ini, dihitung ulang dari suhu maksimum - minimum
+df_raw.insert(df_raw.columns.get_loc('suhu_max_C') + 1, 'rentang_suhu',
+              (df_raw['suhu_max_C'] - df_raw['suhu_min_C']).round(2))
 print('Ukuran data :', df_raw.shape)
 print('Tanggal     :', df_raw.tanggal.unique(), df_raw.waktu.unique())
 print('Provinsi    :', df_raw.provinsi.nunique(), '| Kecamatan:', df_raw.id_kecamatan.nunique())
@@ -100,12 +108,32 @@ log = {}
 log['duplikat'] = int(df.duplicated('id_kecamatan').sum())
 df = df.drop_duplicates('id_kecamatan')
 
-# 3.2 Missing value -> median
+# 3.2 Missing value -> median (kolom numerik)
 log['missing_sebelum'] = {k: int(v) for k, v in df.isna().sum().items() if v > 0}
-vis_median = df['visibility_m'].median()
-df['visibility_m'] = df['visibility_m'].fillna(vis_median)
+log['imputasi'] = {}
+for c in log['missing_sebelum']:
+    if pd.api.types.is_numeric_dtype(df[c]):
+        log['imputasi'][c] = float(df[c].median())
+        df[c] = df[c].fillna(df[c].median())
 log['missing_sesudah'] = int(df.isna().sum().sum())
-log['imputasi'] = {'visibility_m': float(vis_median)}
+
+# 3.2b Perbaikan format desimal koordinat.
+#      Pada file revisi, lintang kecamatan di sekitar khatulistiwa (|lat| < ~1,1) kehilangan angka nol
+#      di depan koma sehingga bernilai 10x, 100x, atau 1000x lipat (mis. 0,975 -> 9,75).
+#      Baris yang lintangnya tepat kelipatan 10^n dari versi awal dipulihkan.
+ref = pd.read_csv(REF, sep=';', decimal=',', encoding='utf-8-sig')[['id_kecamatan', 'latitude']]
+_m = df[['id_kecamatan', 'latitude']].merge(ref, on='id_kecamatan', how='left', suffixes=('', '_ref'))
+_ratio = _m.latitude / _m.latitude_ref
+_fix = (_m.latitude_ref.notna() & (_m.latitude_ref != 0)
+        & np.isclose(_ratio, np.round(_ratio), atol=1e-6) & _ratio.round().isin([10, 100, 1000, 10000])).values
+df.loc[_fix, 'latitude'] = _m.loc[_fix, 'latitude_ref'].values
+log['desimal_diperbaiki'] = int(_fix.sum())
+log['contoh_desimal'] = [
+    {'kecamatan': k, 'sebelum': float(a), 'sesudah': float(b)}
+    for k, a, b in zip(df.loc[_fix, 'kecamatan'].head(5), _m.loc[_fix, 'latitude'].head(5), _m.loc[_fix, 'latitude_ref'].head(5))
+]
+print('Lintang dipulihkan:', _fix.sum())
+df_raw.loc[_fix, 'latitude'] = df.loc[_fix, 'latitude'].values
 
 # 3.3 Validasi koordinat: sebagian kecamatan salah geocoding (mis. kecamatan Cirebon jatuh di Sumatera).
 #     Titik dianggap anomali jika (a) tidak satu pun dari 10 tetangga terdekatnya berasal dari provinsi

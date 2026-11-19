@@ -57,9 +57,37 @@ export function rampColor(metric: MetricKey, t: number) {
 }
 export const rampStops = (metric: MetricKey) => (METRICS[metric].warm ? RAMPS.warm : RAMPS.cool);
 
+/**
+ * Batas kelas warna peta per metrik (5 kelas). Dipilih dari sebaran data agar tiap kelas berisi
+ * cukup banyak titik, dan dibulatkan supaya mudah dibaca di legenda.
+ */
+export const METRIC_BREAKS: Record<MetricKey, number[]> = {
+  suhu_C: [22, 25, 28, 31],
+  kelembapan: [55, 65, 75, 85],
+  kecepatan_angin: [1, 2, 4, 6],
+  tutupan_awan: [20, 40, 60, 80],
+  tekanan: [1011, 1013, 1015, 1017],
+};
+
+export function binIndex(metric: MetricKey, v: number) {
+  const b = METRIC_BREAKS[metric];
+  let i = 0;
+  while (i < b.length && v >= b[i]!) i++;
+  return i;
+}
+
+export const binColor = (metric: MetricKey, v: number) => rampStops(metric)[binIndex(metric, v)]!;
+
+/** Label rentang tiap kelas, mis. "< 22", "22 – 25", "≥ 31". */
+export function binLabels(metric: MetricKey) {
+  const b = METRIC_BREAKS[metric];
+  const f = (x: number) => x.toLocaleString("id-ID");
+  return [`< ${f(b[0]!)}`, ...b.slice(0, -1).map((x, i) => `${f(x)} – ${f(b[i + 1]!)}`), `≥ ${f(b[b.length - 1]!)}`];
+}
+
 /** Opsi dasar ECharts agar seluruh grafik konsisten. */
 export const baseChart = {
-  textStyle: { fontFamily: "IBM Plex Sans, sans-serif", color: C.ink2 },
+  textStyle: { fontFamily: "Plus Jakarta Sans, sans-serif", color: C.ink2 },
   grid: { left: 8, right: 16, top: 24, bottom: 8, containLabel: true },
   tooltip: {
     backgroundColor: "#fff",
@@ -86,12 +114,12 @@ export const DICTIONARY: Record<string, string> = {
   id_kecamatan: "Kode wilayah kecamatan (Kemendagri)",
   provinsi: "Nama provinsi",
   kecamatan: "Nama kecamatan",
-  latitude: "Lintang titik pusat kecamatan",
-  longitude: "Bujur titik pusat kecamatan",
+  latitude: "Lintang titik pusat kecamatan (kolom asli: lat_asli)",
+  longitude: "Bujur titik pusat kecamatan (kolom asli: lng_asli)",
   suhu_C: "Suhu udara saat pengamatan (°C)",
   suhu_min_C: "Suhu minimum (°C)",
   suhu_max_C: "Suhu maksimum (°C)",
-  rentang_suhu: "Selisih suhu maksimum dan minimum (°C)",
+  rentang_suhu: "Selisih suhu maksimum dan minimum (°C), dihitung ulang",
   "kelembapan_%": "Kelembapan relatif (%)",
   tekanan_hPa: "Tekanan udara permukaan laut (hPa)",
   cuaca: "Deskripsi kondisi cuaca",

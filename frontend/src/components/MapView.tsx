@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { MapContainer, TileLayer, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import type { Interpolation, MetricKey, Point } from "../lib/api";
-import { C, CLUSTER_COLORS, METRICS, fmtMetric, rampColor, titleCase } from "../lib/theme";
+import { C, CLUSTER_COLORS, METRICS, binColor, fmtMetric, titleCase } from "../lib/theme";
 
 const INDONESIA: [L.LatLngTuple, L.LatLngTuple] = [
   [-11.2, 94.8],
@@ -26,21 +26,18 @@ function PointsLayer({ points, colorBy, metric, clusterNames }: Pick<Props, "poi
   const layer = useRef<L.LayerGroup | null>(null);
   const renderer = useMemo(() => L.canvas({ padding: 0.3, tolerance: 4 }), []);
 
-  const [min, max] = useMemo(() => {
-    const vals = points.map((p) => p[metric]);
-    return [Math.min(...vals), Math.max(...vals)];
-  }, [points, metric]);
-
   useEffect(() => {
     layer.current?.remove();
     const g = L.layerGroup();
+    const byMetric = colorBy === "metric";
     for (const p of points) {
-      const fill = colorBy === "cluster" ? CLUSTER_COLORS[p.cluster]! : rampColor(metric, (p[metric] - min) / (max - min || 1));
+      // Mode metrik memakai kelas warna yang sama persis dengan legenda peta
+      const fill = byMetric ? binColor(metric, p[metric]) : CLUSTER_COLORS[p.cluster]!;
       L.circleMarker([p.lat, p.lon], {
         renderer,
         radius: 4,
-        weight: 0.6,
-        color: "#ffffff",
+        weight: byMetric ? 0.7 : 0.6,
+        color: byMetric ? "rgba(15,42,68,0.45)" : "#ffffff",
         fillColor: fill,
         fillOpacity: 0.92,
       })
@@ -59,7 +56,7 @@ function PointsLayer({ points, colorBy, metric, clusterNames }: Pick<Props, "poi
     return () => {
       g.remove();
     };
-  }, [points, colorBy, metric, min, max, map, renderer, clusterNames]);
+  }, [points, colorBy, metric, map, renderer, clusterNames]);
 
   return null;
 }
