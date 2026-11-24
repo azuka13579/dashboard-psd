@@ -10,6 +10,14 @@ const SHORT: Record<MetricKey, string> = { suhu_C: "Suhu", kelembapan: "Lembap",
 
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
 
+/** Gradasi vertikal ECharts: warna lebih terang di atas, warna dasar di bawah. */
+function grad(hex: string) {
+  const n = parseInt(hex.slice(1), 16);
+  const mix = (c: number) => Math.round(c + (255 - c) * 0.45);
+  const light = `rgb(${mix((n >> 16) & 255)},${mix((n >> 8) & 255)},${mix(n & 255)})`;
+  return { type: "linear", x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: light }, { offset: 1, color: hex }] };
+}
+
 export default function Dashboard() {
   const f = useFilters();
   const model = useModel();
@@ -32,7 +40,7 @@ export default function Dashboard() {
     <div className="space-y-8">
       <div className="space-y-4">
         {/* Toolbar filter: tetap terlihat saat menggulir */}
-        <div className="z-[1100] -mx-4 -mt-5 border-b border-line bg-canvas/95 px-4 py-2.5 backdrop-blur-sm sm:-mx-6 sm:px-6 md:sticky md:top-14">
+        <div className="glass z-[1100] rounded-2xl px-4 py-2.5 md:sticky md:top-[64px]">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <h1 className="mr-2 text-[17px] font-bold text-ink">Monitoring Cuaca Kecamatan</h1>
             <select
@@ -85,7 +93,7 @@ export default function Dashboard() {
                   />
                 }
               />
-              <div className="relative h-[460px] md:h-[520px]">
+              <div className="relative mx-3 mb-3 mt-3 h-[440px] overflow-hidden rounded-2xl md:h-[500px]">
                 {points.data && model.data ? (
                   <>
                     <MapView
@@ -136,7 +144,7 @@ export default function Dashboard() {
         {insights.data ? (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
             {insights.data.insights.map((it) => (
-              <Panel key={it.judul} className="bg-gradient-to-b from-brand-50/70 to-surface">
+              <Panel key={it.judul}>
                 <h3 className="text-[13.5px] font-semibold text-brand-800">{it.judul}</h3>
                 <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-2">{it.isi}</p>
               </Panel>
@@ -213,33 +221,43 @@ export default function Dashboard() {
 /* ---------- Kartu KPI ---------- */
 
 function HeroCard({ s, wilayah, clusterNames, nProv }: { s?: ReturnType<typeof useSummary>["data"]; wilayah: string; clusterNames: string[]; nProv?: number }) {
-  if (!s) return <Loading h={132} />;
+  if (!s) return <Loading h={150} />;
   const dom = [...s.clusters].sort((a, b) => b.n - a.n)[0];
   const pct = dom ? (dom.n / s.n) * 100 : 0;
   return (
-    <div className="relative overflow-hidden rounded-xl bg-brand-600 p-4 text-white shadow-[0_6px_18px_rgba(31,99,198,0.28)] md:col-span-2 xl:col-span-1">
-      <svg aria-hidden className="absolute -right-10 -top-12 h-48 w-48 text-white/10" viewBox="0 0 200 200">
-        <circle cx="100" cy="100" r="98" fill="none" stroke="currentColor" strokeWidth="2" />
-        <circle cx="100" cy="100" r="72" fill="none" stroke="currentColor" strokeWidth="2" />
-        <circle cx="100" cy="100" r="46" fill="none" stroke="currentColor" strokeWidth="2" />
+    <div className="relative overflow-hidden rounded-3xl border border-white/80 bg-gradient-to-br from-white/90 via-sky-100/90 to-sky-300/80 p-5 shadow-[0_12px_32px_rgba(30,110,190,0.18)] md:col-span-2 xl:col-span-1">
+      <svg aria-hidden className="absolute -right-12 -top-14 h-52 w-52 text-white/60" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="98" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="100" cy="100" r="72" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="100" cy="100" r="46" fill="none" stroke="currentColor" strokeWidth="1.5" />
       </svg>
-      <div className="relative flex items-center justify-between gap-3">
+      <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[12px] font-medium text-white/80">Kecamatan dianalisis · {wilayah}</p>
-          <p className="tabular mt-1 text-[34px] font-bold leading-none">{s.n.toLocaleString("id-ID")}</p>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {wilayah === "Indonesia" && nProv ? (
-              <span className="rounded-full bg-white/15 px-2 py-0.5 text-[11.5px] font-medium">{nProv} provinsi</span>
-            ) : null}
-            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[11.5px] font-medium">Sedang hujan {fmt(s.pct_hujan, 1)}%</span>
-          </div>
+          <p className="text-[19px] font-medium leading-tight text-ink">Kecamatan</p>
+          <p className="text-[12.5px] text-ink-2">dianalisis · {wilayah}</p>
+          <p className="tabular mt-2 text-[52px] font-extralight leading-none tracking-tight text-ink">{s.n.toLocaleString("id-ID")}</p>
         </div>
-        <Ring value={pct} label={dom ? clusterNames[dom.cluster] : undefined} size={84} />
+        <Ring value={pct} label={dom ? clusterNames[dom.cluster] : undefined} size={84} tone="light" />
       </div>
-      <p className="relative mt-3 text-[11.5px] text-white/75">Cincin: porsi zona dominan {dom ? clusterNames[dom.cluster] : ""}</p>
+      <div className="relative mt-3 flex flex-wrap gap-1.5">
+        {wilayah === "Indonesia" && nProv ? (
+          <span className="rounded-full bg-white/70 px-2.5 py-0.5 text-[11.5px] font-medium text-brand-800 ring-1 ring-white">{nProv} provinsi</span>
+        ) : null}
+        <span className="rounded-full bg-white/70 px-2.5 py-0.5 text-[11.5px] font-medium text-brand-800 ring-1 ring-white">Sedang hujan {fmt(s.pct_hujan, 1)}%</span>
+      </div>
+      <p className="relative mt-2 text-[11.5px] text-ink-2">Cincin: porsi zona dominan {dom ? clusterNames[dom.cluster] : ""}</p>
     </div>
   );
 }
+
+/** Gaya track rentang per metrik, mengikuti nuansa kartu cuaca. */
+const TRACK: Record<MetricKey, string> = {
+  suhu_C: "track-heat",
+  kelembapan: "track-stripe",
+  kecepatan_angin: "track-sky",
+  tutupan_awan: "track-cloud",
+  tekanan: "track-sky",
+};
 
 function KpiCard({
   metric,
@@ -257,37 +275,37 @@ function KpiCard({
   const m = METRICS[metric];
   const label = metric === "suhu_C" ? "Rata-rata suhu" : m.label;
   const value = s ? (s[metric as keyof typeof s] as number) : undefined;
-  const color = m.warm ? C.amber : C.brand;
   return (
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`group flex flex-col rounded-xl border bg-surface p-3.5 text-left shadow-[0_1px_3px_rgba(16,40,80,0.05)] transition-colors duration-150 ${
-        active ? "border-brand-500 ring-2 ring-brand-100" : "border-line hover:border-brand-200"
+      className={`glass group flex flex-col rounded-3xl p-4 text-left transition-all duration-200 ${
+        active ? "!border-sky-300 ring-2 ring-sky-300/60" : "hover:-translate-y-0.5"
       }`}
     >
-      <p className="text-[12px] font-medium text-ink-3">{label}</p>
-      <p className={`tabular mt-1 text-[22px] font-bold leading-tight ${m.warm ? "text-amber-700" : "text-ink"}`}>
+      <p className="text-[14px] font-medium text-ink">{label}</p>
+      <p className="text-[11px] text-ink-3">Rata-rata antar kecamatan</p>
+      <p className="tabular mt-2 text-[34px] font-extralight leading-none tracking-tight text-ink">
         {value === undefined ? "–" : fmt(value, m.digits)}
-        <span className="ml-1 text-[12.5px] font-medium text-ink-3">{m.unit}</span>
+        <span className="ml-1 text-[14px] font-normal text-ink-3">{m.unit}</span>
       </p>
-      <RangeBar values={values} avg={value} color={color} digits={m.digits} />
+      <RangeBar values={values} avg={value} track={TRACK[metric]} digits={m.digits} />
     </button>
   );
 }
 
-/** Rentang nilai antar kecamatan: garis dari minimum ke maksimum, titik = posisi rata-rata. */
-function RangeBar({ values, avg, color, digits }: { values?: number[]; avg?: number; color: string; digits: number }) {
-  if (!values?.length || avg === undefined) return <div className="mt-auto h-[34px]" />;
+/** Rentang nilai antar kecamatan: track dari minimum ke maksimum, pegangan putih = posisi rata-rata. */
+function RangeBar({ values, avg, track, digits }: { values?: number[]; avg?: number; track: string; digits: number }) {
+  if (!values?.length || avg === undefined) return <div className="mt-auto h-[38px]" />;
   const min = Math.min(...values);
   const max = Math.max(...values);
   const pos = max > min ? ((avg - min) / (max - min)) * 100 : 50;
   return (
-    <div className="mt-auto pt-3">
-      <div className="relative h-1.5 rounded-full" style={{ background: `${color}33` }}>
+    <div className="mt-auto pt-4">
+      <div className={`relative h-3 rounded-full ${track}`}>
         <span
-          className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_1px_3px_rgba(16,40,80,0.3)]"
-          style={{ left: `${pos}%`, background: color }}
+          className="absolute top-1/2 h-5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_1px_4px_rgba(16,40,80,0.35)] ring-1 ring-black/5"
+          style={{ left: `${pos}%` }}
           title="Rata-rata"
         />
       </div>
@@ -308,7 +326,7 @@ function MapLegend({ colorBy, metric, values, clusters }: { colorBy: "cluster" |
       : binLabels(metric).map((label, i) => ({ color: rampStops(metric)[i]!, label, n: values.filter((v) => binIndex(metric, v) === i).length }));
   const title = colorBy === "cluster" ? "Zona iklim" : `${METRICS[metric].label} (${METRICS[metric].unit})`;
   return (
-    <div className="absolute bottom-6 left-3 z-[1001] min-w-[165px] rounded-lg border border-line bg-surface/95 px-3 py-2.5 shadow-[0_6px_18px_rgba(16,40,80,0.14)]">
+    <div className="absolute bottom-6 left-3 z-[1001] min-w-[165px] glass rounded-2xl px-3.5 py-3">
       <p className="mb-1.5 text-[12px] font-semibold text-ink">{title}</p>
       <ul className="space-y-1">
         {rows.map((r) => (
@@ -354,7 +372,7 @@ function DistributionCard({ points, metric, clusters, wilayah }: { points?: Poin
         type: "bar",
         stack: "z",
         barCategoryGap: "18%",
-        itemStyle: { color: CLUSTER_COLORS[c.id] },
+        itemStyle: { color: grad(CLUSTER_COLORS[c.id]!), borderRadius: c.id === clusters.length - 1 ? [4, 4, 0, 0] : 0 },
         data: counts[c.id],
       })),
     };
@@ -429,16 +447,16 @@ function ZoneBars({ points, all, metric, clusters, filtered }: { points?: Point[
     const short = clusters.map((c) => c.nama.split("-")[0]);
     const series: object[] = [];
     if (filtered)
-      series.push({ name: "Nasional", type: "bar", barGap: "15%", barMaxWidth: 18, itemStyle: { color: "#cdd6e2", borderRadius: [3, 3, 0, 0] }, data: clusters.map((c) => +avg(all, c.id).toFixed(2)) });
+      series.push({ name: "Nasional", type: "bar", barGap: "15%", barMaxWidth: 18, itemStyle: { color: "rgba(255,255,255,0.85)", borderColor: "#cfe0f2", borderWidth: 1, borderRadius: [8, 8, 2, 2] }, data: clusters.map((c) => +avg(all, c.id).toFixed(2)) });
     series.push({
       name: filtered ? "Wilayah terpilih" : "Indonesia",
       type: "bar",
-      barMaxWidth: 18,
-      itemStyle: { borderRadius: [3, 3, 0, 0] },
+      barMaxWidth: 22,
+      itemStyle: { borderRadius: [8, 8, 2, 2] },
       label: { show: true, position: "top", fontSize: 10, color: C.ink2, formatter: (p: any) => (Number.isFinite(p.value) ? fmt(p.value, m.digits) : "") },
       data: clusters.map((c) => {
         const v = avg(points, c.id);
-        return { value: Number.isFinite(v) ? +v.toFixed(2) : null, itemStyle: { color: CLUSTER_COLORS[c.id] } };
+        return { value: Number.isFinite(v) ? +v.toFixed(2) : null, itemStyle: { color: grad(CLUSTER_COLORS[c.id]!) } };
       }),
     });
     return {
@@ -518,7 +536,7 @@ function ProvinceTable({ points, names, selected, onSelect }: { points?: Point[]
       ) : (
         <div className="max-h-[512px] overflow-auto xl:max-h-none xl:min-h-[320px] xl:flex-1 xl:[contain:size]">
           <table className="w-full text-[12.5px]">
-            <thead className="sticky top-0 z-10 bg-[#f6f8fb] text-left text-[10.5px] uppercase tracking-wide text-ink-3">
+            <thead className="sticky top-0 z-10 bg-white/80 backdrop-blur text-left text-[10.5px] uppercase tracking-wide text-ink-3">
               <tr>
                 <th className="py-2 pl-4 pr-2 font-semibold">#</th>
                 <th className="px-2 py-2 font-semibold">Provinsi</th>
@@ -538,7 +556,7 @@ function ProvinceTable({ points, names, selected, onSelect }: { points?: Point[]
                   <tr
                     key={r.prov}
                     onClick={() => onSelect(r.prov)}
-                    className={`cursor-pointer border-t border-line-2 transition-colors ${sel ? "bg-brand-50" : "hover:bg-[#f7f9fc]"}`}
+                    className={`cursor-pointer border-t border-white/70 transition-colors ${sel ? "bg-sky-100/80" : "hover:bg-white/60"}`}
                   >
                     <td className="tabular py-2 pl-4 pr-2 text-ink-3">{i + 1}</td>
                     <td className={`max-w-[150px] truncate px-2 py-2 font-medium ${sel ? "text-brand-700" : "text-ink"}`}>{r.prov}</td>
@@ -608,11 +626,11 @@ function Ranking() {
               <li key={`${r.kecamatan}-${r.provinsi}`}>
                 <button
                   onClick={() => f.setFocus({ lat: r.lat, lon: r.lon, label: r.kecamatan })}
-                  className="group flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1 text-left transition-colors duration-150 hover:bg-[#f5f8fc]"
+                  className="group flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1 text-left transition-colors duration-150 hover:bg-white/60"
                 >
                   <span
                     className={`tabular flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10.5px] font-semibold ${
-                      i < 3 ? "bg-brand-600 text-white" : "bg-[#eef1f6] text-ink-3"
+                      i < 3 ? "bg-gradient-to-b from-sky-400 to-brand-600 text-white" : "bg-white/70 text-ink-3"
                     }`}
                   >
                     {i + 1}
@@ -675,10 +693,10 @@ function CheckLocation() {
     );
   };
 
-  const input = "h-8 w-full rounded-lg border border-line bg-surface px-2.5 text-[12.5px] outline-none transition-colors hover:border-brand-200 focus:border-brand-500";
+  const input = "h-8 w-full rounded-full border border-white/80 bg-white/70 px-3.5 text-[12.5px] outline-none transition-colors hover:border-brand-200 focus:border-brand-500";
 
   return (
-    <div className="rounded-xl border border-line bg-surface p-4 shadow-[0_1px_3px_rgba(16,40,80,0.05)]">
+    <div className="glass rounded-3xl p-5">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-[13.5px] font-semibold text-ink">Cek Lokasimu</h3>
         <Pill>IDW</Pill>
@@ -687,10 +705,10 @@ function CheckLocation() {
         <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-[1fr_1fr_auto_auto]">
           <input aria-label="Lintang" value={lat} onChange={(e) => setLat(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="Lintang" className={input} />
           <input aria-label="Bujur" value={lon} onChange={(e) => setLon(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="Bujur" className={input} />
-          <button onClick={submit} className="h-8 rounded-lg bg-brand-600 px-3 text-[12.5px] font-semibold text-white transition-colors duration-150 hover:bg-brand-700">
+          <button onClick={submit} className="h-8 rounded-full bg-gradient-to-b from-sky-500 to-brand-600 px-4 shadow-[0_2px_8px_rgba(31,99,198,0.3)] text-[12.5px] font-semibold text-white transition-colors duration-150 hover:brightness-110">
             Cek koordinat
           </button>
-          <button onClick={useGps} className="h-8 rounded-lg border border-line px-3 text-[12.5px] font-medium text-ink transition-colors duration-150 hover:bg-[#f5f8fc]">
+          <button onClick={useGps} className="h-8 rounded-full bg-white/60 px-4 ring-1 ring-white/80 text-[12.5px] font-medium text-ink transition-colors duration-150 hover:bg-white">
             Lokasi saya
           </button>
         </div>
@@ -724,7 +742,7 @@ function CheckLocation() {
             </div>
             <dl className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
               {(Object.keys(data.values) as MetricKey[]).map((k) => (
-                <div key={k} className="rounded-lg bg-[#f5f8fc] px-2 py-1.5">
+                <div key={k} className="rounded-xl bg-white/60 px-2.5 py-1.5 ring-1 ring-white/80">
                   <dt className="text-[10.5px] text-ink-3">{METRICS[k].label}</dt>
                   <dd className={`tabular text-[13px] font-semibold ${METRICS[k].warm ? "text-amber-700" : "text-ink"}`}>{fmtMetric(k, data.values[k])}</dd>
                 </div>

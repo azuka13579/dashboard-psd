@@ -271,7 +271,7 @@ export default function Modelling() {
           <ol>
             {steps.map((s) => (
               <li key={s.title} className="grid border-b border-line-2 last:border-0 md:grid-cols-[230px_1fr]">
-                <div className="bg-[#f8fafc] px-4 py-3.5 md:border-r md:border-line-2">
+                <div className="bg-white/45 px-4 py-3.5 md:border-r md:border-white/70">
                   <h3 className="text-[14px] font-semibold text-ink">{s.title}</h3>
                   <p className="mt-1 inline-block rounded-full bg-brand-50 px-2 py-0.5 text-[11.5px] font-semibold text-brand-700">{s.result}</p>
                 </div>

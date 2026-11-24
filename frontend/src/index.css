@@ -46,13 +46,30 @@
 html, body, #root { min-height: 100%; }
 html { scrollbar-gutter: stable; }
 body {
-  background: var(--color-canvas);
+  background: linear-gradient(180deg, #dcebf9 0%, #e9f3fc 50%, #f2f7fd 100%);
+  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "cv11", "ss01";
+}
+
+/* Gumpalan warna lembut di belakang konten, supaya efek kaca (blur) terlihat */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -10vmax;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(28vmax 22vmax at 12% 18%, rgb(56 189 248 / 0.45), transparent 70%),
+    radial-gradient(26vmax 20vmax at 88% 12%, rgb(99 102 241 / 0.22), transparent 70%),
+    radial-gradient(30vmax 24vmax at 78% 62%, rgb(34 211 238 / 0.32), transparent 70%),
+    radial-gradient(24vmax 20vmax at 22% 78%, rgb(251 191 36 / 0.16), transparent 70%),
+    radial-gradient(22vmax 18vmax at 50% 42%, rgb(196 181 253 / 0.25), transparent 70%);
+  filter: blur(40px);
 }
 
 ::selection { background: var(--color-sky-100); color: var(--color-navy-900); }
@@ -64,6 +81,30 @@ input, select { accent-color: var(--color-navy-700); }
 *::-webkit-scrollbar-thumb { background: #c9d2dd; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
 
 .tabular { font-variant-numeric: tabular-nums; }
+
+/* Kartu kaca: putih transparan + blur, gaya dashboard cuaca */
+.glass {
+  background: linear-gradient(140deg, rgb(255 255 255 / 0.72) 0%, rgb(255 255 255 / 0.48) 100%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgb(255 255 255 / 0.70);
+  box-shadow:
+    0 10px 30px rgb(30 80 150 / 0.10),
+    inset 0 1px 0 rgb(255 255 255 / 0.90),
+    inset 0 -1px 0 rgb(255 255 255 / 0.25);
+}
+.glass-soft {
+  background: linear-gradient(140deg, rgb(255 255 255 / 0.68), rgb(255 255 255 / 0.45));
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+  backdrop-filter: blur(18px) saturate(170%);
+  border: 1px solid rgb(255 255 255 / 0.65);
+}
+/* Track suhu: hijau - kuning - oranye - merah */
+.track-heat { background: linear-gradient(90deg, #34d399, #a3e635, #facc15, #fb923c, #ef4444); }
+/* Track bergaris cyan */
+.track-stripe { background: repeating-linear-gradient(90deg, #22d3ee 0 3px, #a5f3fc 3px 6px); }
+.track-sky { background: linear-gradient(90deg, #bae6fd, #38bdf8, #2563eb); }
+.track-cloud { background: repeating-linear-gradient(90deg, #fbbf24 0 3px, #fde68a 3px 6px); }
 
 /* Pita navy selebar layar meski kontennya dibatasi max-width */
 .bleed-navy {
