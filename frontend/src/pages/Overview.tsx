@@ -78,14 +78,14 @@ export default function Overview() {
         calculable: false,
         text: ["+1", "-1"],
         textStyle: { color: C.ink3, fontSize: 11 },
-        inRange: { color: [C.navy700, "#F2F4F7", C.amber] },
+        inRange: { color: [C.navy700, "#262A32", C.amber] },
       },
       series: [
         {
           type: "heatmap",
           data: cells,
           label: { show: true, fontSize: 9, color: C.ink, formatter: (p: any) => (p.value[2] === 1 ? "" : fmt(p.value[2], 2)) },
-          itemStyle: { borderColor: "#fff", borderWidth: 2 },
+          itemStyle: { borderColor: "#171A20", borderWidth: 2 },
         },
       ],
     };

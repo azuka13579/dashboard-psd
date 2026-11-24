@@ -7,7 +7,7 @@ type Tone = "light" | "dark";
 /** Kartu dasar: putih, sudut membulat, bayangan lembut. */
 export function Panel({ children, className = "", pad = true }: { children: ReactNode; className?: string; pad?: boolean }) {
   return (
-    <div className={`rounded-xl border border-line bg-surface shadow-[0_1px_3px_rgba(16,40,80,0.05)] ${pad ? "p-4" : ""} ${className}`}>{children}</div>
+    <div className={`glass rounded-2xl ${pad ? "p-4" : ""} ${className}`}>{children}</div>
   );
 }
 
@@ -78,7 +78,7 @@ export function KpiStrip({ items }: { items: Kpi[]; tone?: Tone }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-flow-col xl:auto-cols-fr xl:grid-cols-none">
       {items.map((k) => (
-        <div key={k.label} className="rounded-xl border border-line bg-surface px-4 py-3 shadow-[0_1px_3px_rgba(16,40,80,0.05)]">
+        <div key={k.label} className="glass rounded-2xl px-4 py-3">
           <p className="text-[12px] font-medium text-ink-3">{k.label}</p>
           <p className={`tabular mt-1 text-[20px] font-bold leading-tight ${k.accent === "amber" ? "text-amber-700" : "text-ink"}`}>
             {k.value}
@@ -107,7 +107,7 @@ export function Segmented<T extends string>({
   tone?: Tone;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex flex-wrap gap-0.5 rounded-full bg-[#eef1f6] p-[3px]">
+    <div role="radiogroup" aria-label={label} className="inline-flex flex-wrap gap-0.5 rounded-full bg-white/[0.06] p-[3px]">
       {options.map((o) => {
         const active = value === o.value;
         return (
@@ -117,7 +117,7 @@ export function Segmented<T extends string>({
             aria-checked={active}
             onClick={() => onChange(o.value)}
             className={`inline-flex items-center gap-1.5 rounded-full font-medium transition-all duration-150 ${size === "sm" ? "px-2.5 py-[3px] text-[12px]" : "px-3.5 py-1.5 text-[13px]"} ${
-              active ? "bg-surface text-brand-700 shadow-[0_1px_3px_rgba(16,40,80,0.14)]" : "text-ink-3 hover:text-ink"
+              active ? "bg-white/[0.14] text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" : "text-ink-3 hover:text-ink"
             }`}
           >
             {o.label}
@@ -133,7 +133,7 @@ export function Segmented<T extends string>({
 
 /** Label pil kecil. */
 export function Pill({ children, tone = "brand" }: { children: ReactNode; tone?: "brand" | "amber" | "neutral" }) {
-  const cls = tone === "amber" ? "bg-amber-50 text-amber-700" : tone === "neutral" ? "bg-[#eef1f6] text-ink-2" : "bg-brand-50 text-brand-700";
+  const cls = tone === "amber" ? "bg-amber-50 text-amber-700" : tone === "neutral" ? "bg-white/[0.06] text-ink-2" : "bg-brand-50 text-brand-700";
   return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-medium ${cls}`}>{children}</span>;
 }
 
@@ -215,7 +215,7 @@ export function Table({ head, rows, align, dense }: { head: ReactNode[]; rows: R
     <div className="overflow-x-auto rounded-lg border border-line-2">
       <table className="w-full text-[13px]">
         <thead>
-          <tr className="bg-[#f6f8fb] text-left text-[11.5px] uppercase tracking-wide text-ink-3">
+          <tr className="bg-white/[0.03] text-left text-[11.5px] uppercase tracking-wide text-ink-3">
             {head.map((h, i) => (
               <th key={i} className={`px-3 py-2 font-semibold ${align?.[i] === "r" ? "text-right" : ""}`}>
                 {h}
@@ -225,7 +225,7 @@ export function Table({ head, rows, align, dense }: { head: ReactNode[]; rows: R
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-t border-line-2 transition-colors hover:bg-brand-50/60">
+            <tr key={i} className="border-t border-line-2 transition-colors hover:bg-white/[0.04]">
               {r.map((c, j) => (
                 <td key={j} className={`px-3 ${py} text-ink ${align?.[j] === "r" ? "tabular text-right" : ""}`}>
                   {c}

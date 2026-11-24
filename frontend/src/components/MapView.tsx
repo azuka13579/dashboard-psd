@@ -37,7 +37,7 @@ function PointsLayer({ points, colorBy, metric, clusterNames }: Pick<Props, "poi
         renderer,
         radius: 4,
         weight: byMetric ? 0.7 : 0.6,
-        color: byMetric ? "rgba(15,42,68,0.45)" : "#ffffff",
+        color: "rgba(0,0,0,0.55)",
         fillColor: fill,
         fillOpacity: 0.92,
       })
@@ -103,12 +103,12 @@ function CheckLayer({ check, checkLoc }: { check?: Interpolation; checkLoc: Prop
             [checkLoc.lat, checkLoc.lon],
             [n.latitude, n.longitude],
           ],
-          { color: C.navy, weight: 1, opacity: 0.25 + n.bobot * 0.75, dashArray: "3 4", interactive: false },
+          { color: "#ffffff", weight: 1, opacity: 0.25 + n.bobot * 0.75, dashArray: "3 4", interactive: false },
         ).addTo(g);
       }
     }
-    L.circleMarker([checkLoc.lat, checkLoc.lon], { radius: 9, color: C.navy, weight: 3, fillColor: "#fff", fillOpacity: 1 }).addTo(g);
-    L.circleMarker([checkLoc.lat, checkLoc.lon], { radius: 3.5, stroke: false, fillColor: C.navy, fillOpacity: 1, interactive: false }).addTo(g);
+    L.circleMarker([checkLoc.lat, checkLoc.lon], { radius: 9, color: "#ffffff", weight: 3, fillColor: C.brand, fillOpacity: 1 }).addTo(g);
+    L.circleMarker([checkLoc.lat, checkLoc.lon], { radius: 3.5, stroke: false, fillColor: "#ffffff", fillOpacity: 1, interactive: false }).addTo(g);
     g.addTo(map);
     return () => {
       g.remove();
@@ -122,7 +122,7 @@ function FocusLayer({ focus }: { focus: Props["focus"] }) {
   useEffect(() => {
     if (!focus) return;
     map.flyTo([focus.lat, focus.lon], Math.max(map.getZoom(), 9), { duration: 0.6 });
-    const m = L.circleMarker([focus.lat, focus.lon], { radius: 12, color: C.navy, weight: 2.5, fill: false })
+    const m = L.circleMarker([focus.lat, focus.lon], { radius: 12, color: "#ffffff", weight: 2.5, fill: false })
       .bindTooltip(titleCase(focus.label), { permanent: true, direction: "top", offset: [0, -10], className: "map-tip" })
       .addTo(map);
     return () => {
@@ -151,7 +151,7 @@ export default function MapView(props: Props) {
       preferCanvas
     >
       <TileLayer
-        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+        url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
         attribution="Tiles &copy; Esri &mdash; Esri, HERE, Garmin, OpenStreetMap contributors"
         maxNativeZoom={16}
       />

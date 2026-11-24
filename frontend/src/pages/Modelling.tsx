@@ -50,7 +50,7 @@ export default function Modelling() {
       series: [
         {
           type: "bar",
-          data: m.elbow.map((e) => ({ value: e.silhouette, itemStyle: { color: e.k === m.k ? C.amber : "#C7D3E0" } })),
+          data: m.elbow.map((e) => ({ value: e.silhouette, itemStyle: { color: e.k === m.k ? C.amber : "rgba(255,255,255,0.18)" } })),
           barWidth: 16,
           itemStyle: { borderRadius: [3, 3, 0, 0] },
         },
@@ -72,7 +72,7 @@ export default function Modelling() {
         symbolSize: 5,
         large: true,
         itemStyle: { color: CLUSTER_COLORS[c.id], opacity: 0.6 },
-        emphasis: { itemStyle: { opacity: 1, borderColor: "#fff", borderWidth: 1 } },
+        emphasis: { itemStyle: { opacity: 1, borderColor: "#171A20", borderWidth: 1 } },
         data: pca.data.filter((p) => p.cluster === c.id).map((p) => [p.pc1, p.pc2, p.kecamatan, p.provinsi]),
       })),
     };
@@ -271,7 +271,7 @@ export default function Modelling() {
           <ol>
             {steps.map((s) => (
               <li key={s.title} className="grid border-b border-line-2 last:border-0 md:grid-cols-[230px_1fr]">
-                <div className="bg-[#f8fafc] px-4 py-3.5 md:border-r md:border-line-2">
+                <div className="bg-white/[0.03] px-4 py-3.5 md:border-r md:border-line-2">
                   <h3 className="text-[14px] font-semibold text-ink">{s.title}</h3>
                   <p className="mt-1 inline-block rounded-full bg-brand-50 px-2 py-0.5 text-[11.5px] font-semibold text-brand-700">{s.result}</p>
                 </div>

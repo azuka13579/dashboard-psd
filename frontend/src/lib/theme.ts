@@ -1,21 +1,22 @@
 import type { MetricKey } from "./api";
 
-/** Warna cluster (sudah divalidasi: lightness, chroma, separasi buta warna, kontras). */
-export const CLUSTER_COLORS = ["#B97600", "#4096D8", "#2D5F96"] as const;
+/** Warna cluster untuk latar gelap: amber (Panas-Kering), toska (Sejuk-Cerah), biru (Lembap-Berawan). */
+export const CLUSTER_COLORS = ["#E2A33B", "#34C6B6", "#5C8DF0"] as const;
 
 export const C = {
-  navy: "#0F2A44",
-  navy700: "#2D5F96",
-  brand: "#1F63C6",
-  brandSoft: "#C3D7F4",
-  sky: "#4096D8",
-  amber: "#B97600",
-  ink: "#13202E",
-  ink2: "#4B5A6A",
-  ink3: "#7A8796",
-  line: "#E2E7ED",
-  grid: "#EEF1F5",
-  surface: "#FFFFFF",
+  navy: "#0B0D10",
+  navy700: "#5C8DF0",
+  brand: "#3F9CF5",
+  brandSoft: "rgba(63,156,245,0.35)",
+  teal: "#34C6B6",
+  sky: "#5AAEF8",
+  amber: "#E2A33B",
+  ink: "#EEF2F7",
+  ink2: "#AEB8C6",
+  ink3: "#7F8A99",
+  line: "rgba(255,255,255,0.10)",
+  grid: "rgba(255,255,255,0.06)",
+  surface: "#171A20",
 };
 
 export const METRICS: Record<MetricKey, { label: string; unit: string; digits: number; warm?: boolean }> = {
@@ -36,10 +37,10 @@ export const fmtMetric = (m: MetricKey, v: number | undefined) => `${fmt(v, METR
 
 export const titleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 
-/** Ramp sekuensial satu hue (terang -> gelap). Suhu memakai amber, metrik lain memakai biru. */
+/** Ramp sekuensial satu hue untuk latar gelap: nilai rendah redup, nilai tinggi terang. */
 const RAMPS = {
-  warm: ["#F7EBD2", "#E9C27A", "#D29A2C", "#B97600", "#7A4D00"],
-  cool: ["#E3EFFA", "#A9CCEC", "#6AA6DC", "#3478BC", "#1A4778"],
+  warm: ["#5E4214", "#8E6118", "#BF8424", "#E2A33B", "#F7D58C"],
+  cool: ["#1F3A66", "#2B5D9C", "#3F86D2", "#6AB0F5", "#B4DAFC"],
 };
 
 function hexToRgb(h: string) {
@@ -89,15 +90,15 @@ export function binLabels(metric: MetricKey) {
 
 /** Opsi dasar ECharts agar seluruh grafik konsisten. */
 export const baseChart = {
-  textStyle: { fontFamily: "Plus Jakarta Sans, sans-serif", color: C.ink2 },
+  textStyle: { fontFamily: "Creato Display, sans-serif", color: C.ink2 },
   grid: { left: 8, right: 16, top: 24, bottom: 8, containLabel: true },
   tooltip: {
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(23,26,32,0.96)",
     borderColor: C.line,
     borderWidth: 1,
     padding: [8, 10],
     textStyle: { color: C.ink, fontSize: 12 },
-    extraCssText: "box-shadow:0 6px 18px rgba(15,42,68,.12);border-radius:6px;",
+    extraCssText: "box-shadow:0 10px 24px rgba(0,0,0,.45);border-radius:10px;backdrop-filter:blur(8px);",
   },
 };
 

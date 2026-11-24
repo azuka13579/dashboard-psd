@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useInsights, useInterpolation, useModel, usePoints, useProvinces, useRanking, useSummary, type MetricKey, type Point } from "../lib/api";
+import { useMemo, useState, type ReactNode } from "react";
+import { useInsights, useInterpolation, useMeta, useModel, usePoints, useProvinces, useRanking, useSummary, type MetricKey, type Point } from "../lib/api";
 import { useFilters } from "../lib/store";
 import { C, CLUSTER_COLORS, METRICS, METRIC_KEYS, axisStyle, baseChart, binIndex, binLabels, fmt, fmtMetric, rampStops, titleCase } from "../lib/theme";
 import { Chart, ClusterDot, ErrorBox, Loading, Panel, PanelBar, PanelHeader, Pill, Ring, Section, Segmented } from "../components/ui";
@@ -29,17 +29,20 @@ export default function Dashboard() {
   const totalCluster = model.data?.clusters.reduce((a, c) => a + c.jumlah, 0) || 1;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-7">
       <div className="space-y-4">
-        {/* Toolbar filter: tetap terlihat saat menggulir */}
-        <div className="z-[1100] -mx-4 -mt-5 border-b border-line bg-canvas/95 px-4 py-2.5 backdrop-blur-sm sm:-mx-6 sm:px-6 md:sticky md:top-14">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <h1 className="mr-2 text-[17px] font-bold text-ink">Monitoring Cuaca Kecamatan</h1>
+        {/* Judul + filter */}
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-[24px] font-bold leading-tight text-ink">Dashboard Cuaca</h1>
+            <p className="text-[13px] text-ink-3">Kondisi cuaca {points.data ? `${points.data.length.toLocaleString("id-ID")} kecamatan` : "kecamatan"} di {wilayah}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <select
               aria-label="Provinsi"
               value={f.provinsi ?? ""}
               onChange={(e) => f.setProvinsi(e.target.value || undefined)}
-              className="h-8 min-w-[200px] rounded-full border border-line bg-surface px-3 text-[13px] font-medium text-ink outline-none transition-colors hover:border-brand-200 focus:border-brand-500"
+              className="glass h-9 min-w-[210px] rounded-full px-4 text-[13px] font-medium text-ink outline-none transition-colors hover:border-white/20 focus:border-brand-500"
             >
               <option value="">Semua provinsi</option>
               {provinces.data?.map((p) => (
@@ -48,86 +51,103 @@ export default function Dashboard() {
                 </option>
               ))}
             </select>
-            <Segmented size="sm" label="Metrik" value={f.metric} onChange={f.setMetric} options={METRIC_KEYS.map((m) => ({ value: m, label: METRICS[m].label }))} />
+            <Segmented size="sm" label="Metrik" value={f.metric} onChange={f.setMetric} options={METRIC_KEYS.map((m) => ({ value: m, label: SHORT[m] }))} />
             {f.provinsi && (
-              <button onClick={() => f.setProvinsi(undefined)} className="text-[12.5px] font-medium text-brand-600 hover:text-brand-800">
-                Reset filter
+              <button onClick={() => f.setProvinsi(undefined)} className="text-[12.5px] font-medium text-brand-700 hover:text-ink">
+                Reset
               </button>
             )}
           </div>
         </div>
 
-        {/* Baris KPI */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[1.45fr_1fr_1fr_1fr_1fr] [&>*]:min-w-0">
-          <HeroCard s={s} wilayah={wilayah} clusterNames={clusterNames} nProv={provinces.data?.length} />
-          {(["suhu_C", "kelembapan", "kecepatan_angin", "tutupan_awan"] as MetricKey[]).map((k) => (
-            <KpiCard key={k} metric={k} s={s} values={points.data?.map((p) => p[k])} active={f.metric === k} onClick={() => f.setMetric(k)} />
-          ))}
+        {/* Baris 1: kartu cuaca utama + sorotan */}
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 [&>*]:min-w-0">
+          <HeroWeather s={s} wilayah={wilayah} clusterNames={clusterNames} className="xl:col-span-4" />
+          <Panel className="xl:col-span-8">
+            <PanelHeader title="Sorotan saat pengamatan" sub={`Rata-rata seluruh kecamatan di ${wilayah}`} />
+            <div className="grid gap-3 md:grid-cols-3">
+              <WindCard s={s} values={points.data?.map((p) => p.kecepatan_angin)} onClick={() => f.setMetric("kecepatan_angin")} />
+              <HumidityGauge s={s} onClick={() => f.setMetric("kelembapan")} />
+              <TempArc s={s} onClick={() => f.setMetric("suhu_C")} />
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <SmallStat label="Tutupan awan" value={s ? fmt(s.tutupan_awan, 0) : "–"} unit="%" note="Rata-rata langit tertutup awan" onClick={() => f.setMetric("tutupan_awan")} />
+              <SmallStat label="Tekanan udara" value={s ? fmt(s.tekanan, 0) : "–"} unit="hPa" note="Tekanan permukaan laut" onClick={() => f.setMetric("tekanan")} />
+              <SmallStat label="Sedang hujan" value={s ? fmt(s.pct_hujan, 1) : "–"} unit="%" note="Porsi kecamatan saat pengamatan" />
+            </div>
+          </Panel>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-          {/* Kolom kiri: peta + distribusi + peringkat */}
-          <div className="min-w-0 space-y-4 xl:col-span-7">
-            <Panel pad={false} className="relative overflow-hidden">
-              <PanelBar
-                title={`Peta persebaran ${wilayah}`}
-                sub={points.data ? `${points.data.length.toLocaleString("id-ID")} kecamatan · klik peta untuk cek lokasi` : "Memuat titik"}
-                right={
-                  <Segmented
-                    size="sm"
-                    label="Warna peta"
-                    value={f.colorBy}
-                    onChange={f.setColorBy}
-                    options={[
-                      { value: "cluster", label: "Zona" },
-                      { value: "metric", label: METRICS[f.metric].label },
-                    ]}
-                  />
-                }
-              />
-              <div className="relative h-[460px] md:h-[520px]">
-                {points.data && model.data ? (
-                  <>
-                    <MapView
-                      points={points.data}
-                      colorBy={f.colorBy}
-                      metric={f.metric}
-                      clusterNames={clusterNames}
-                      provinsi={f.provinsi}
-                      check={check.data}
-                      checkLoc={f.checkLoc}
-                      focus={f.focus}
-                      onPick={(lat, lon) => f.setCheckLoc({ lat, lon })}
-                    />
-                    <MapLegend
-                      colorBy={f.colorBy}
-                      metric={f.metric}
-                      values={points.data.map((p) => (f.colorBy === "cluster" ? p.cluster : p[f.metric]))}
-                      clusters={model.data.clusters}
-                    />
-                  </>
-                ) : (
-                  <div className="h-full p-3">
-                    <Loading h={440} />
-                  </div>
-                )}
-              </div>
-            </Panel>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-[1.25fr_1fr] [&>*]:min-w-0">
-              <DistributionCard points={points.data} metric={f.metric} clusters={model.data?.clusters} wilayah={wilayah} />
-              <Ranking />
-            </div>
+        {/* Baris 2: peringkat + peta */}
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 [&>*]:min-w-0">
+          <div className="xl:col-span-4 xl:min-h-0">
+            <Ranking />
           </div>
-
-          {/* Kolom kanan: komposisi + per zona + tabel provinsi */}
-          <div className="flex min-w-0 flex-col gap-4 xl:col-span-5 xl:min-h-0">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <ZoneDonut s={s} clusters={model.data?.clusters} />
-              <ZoneBars points={points.data} all={allPoints.data} metric={f.metric} clusters={model.data?.clusters} filtered={!!f.provinsi} />
+          <Panel pad={false} className="relative overflow-hidden xl:col-span-8">
+            <PanelBar
+              title="Peta kondisi cuaca"
+              sub="Klik titik mana pun di peta untuk cek lokasi"
+              right={
+                <Segmented
+                  size="sm"
+                  label="Warna peta"
+                  value={f.colorBy}
+                  onChange={f.setColorBy}
+                  options={[
+                    { value: "cluster", label: "Zona" },
+                    { value: "metric", label: METRICS[f.metric].label },
+                  ]}
+                />
+              }
+            />
+            <div className="relative h-[460px] md:h-[500px]">
+              {points.data && model.data ? (
+                <>
+                  <MapView
+                    points={points.data}
+                    colorBy={f.colorBy}
+                    metric={f.metric}
+                    clusterNames={clusterNames}
+                    provinsi={f.provinsi}
+                    check={check.data}
+                    checkLoc={f.checkLoc}
+                    focus={f.focus}
+                    onPick={(lat, lon) => f.setCheckLoc({ lat, lon })}
+                  />
+                  <MapLegend
+                    colorBy={f.colorBy}
+                    metric={f.metric}
+                    values={points.data.map((p) => (f.colorBy === "cluster" ? p.cluster : p[f.metric]))}
+                    clusters={model.data.clusters}
+                  />
+                </>
+              ) : (
+                <div className="h-full p-3">
+                  <Loading h={440} />
+                </div>
+              )}
             </div>
+          </Panel>
+        </div>
+
+        {/* Baris 3: cek lokasi + distribusi */}
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 [&>*]:min-w-0 xl:[&>*>*]:h-full">
+          <div className="xl:col-span-4">
             <CheckLocation />
+          </div>
+          <div className="xl:col-span-8">
+            <DistributionCard points={points.data} metric={f.metric} clusters={model.data?.clusters} wilayah={wilayah} />
+          </div>
+        </div>
+
+        {/* Baris 4: tabel provinsi + komposisi dan rata-rata per zona */}
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-12 [&>*]:min-w-0">
+          <div className="xl:col-span-8">
             <ProvinceTable points={allPoints.data} names={clusterNames} selected={f.provinsi} onSelect={(p) => f.setProvinsi(p === f.provinsi ? undefined : p)} />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:col-span-4 xl:grid-cols-1">
+            <ZoneDonut s={s} clusters={model.data?.clusters} />
+            <ZoneBars points={points.data} all={allPoints.data} metric={f.metric} clusters={model.data?.clusters} filtered={!!f.provinsi} />
           </div>
         </div>
       </div>
@@ -210,92 +230,209 @@ export default function Dashboard() {
   );
 }
 
-/* ---------- Kartu KPI ---------- */
+/* ---------- Kartu cuaca utama dan sorotan ---------- */
 
-function HeroCard({ s, wilayah, clusterNames, nProv }: { s?: ReturnType<typeof useSummary>["data"]; wilayah: string; clusterNames: string[]; nProv?: number }) {
-  if (!s) return <Loading h={132} />;
+type Sum = ReturnType<typeof useSummary>["data"];
+
+const KONDISI: Record<string, string> = { Clear: "Cerah", Clouds: "Berawan", Rain: "Hujan" };
+
+function HeroWeather({ s, wilayah, clusterNames, className = "" }: { s?: Sum; wilayah: string; clusterNames: string[]; className?: string }) {
+  const meta = useMeta();
+  if (!s) return <Loading h={300} />;
+  const kond = [...s.cuaca].sort((a, b) => b.n - a.n)[0];
   const dom = [...s.clusters].sort((a, b) => b.n - a.n)[0];
-  const pct = dom ? (dom.n / s.n) * 100 : 0;
+  const tanggal = meta.data
+    ? new Date(meta.data.meta.tanggal).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+    : "";
   return (
-    <div className="relative overflow-hidden rounded-xl bg-brand-600 p-4 text-white shadow-[0_6px_18px_rgba(31,99,198,0.28)] md:col-span-2 xl:col-span-1">
-      <svg aria-hidden className="absolute -right-10 -top-12 h-48 w-48 text-white/10" viewBox="0 0 200 200">
-        <circle cx="100" cy="100" r="98" fill="none" stroke="currentColor" strokeWidth="2" />
-        <circle cx="100" cy="100" r="72" fill="none" stroke="currentColor" strokeWidth="2" />
-        <circle cx="100" cy="100" r="46" fill="none" stroke="currentColor" strokeWidth="2" />
-      </svg>
-      <div className="relative flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[12px] font-medium text-white/80">Kecamatan dianalisis · {wilayah}</p>
-          <p className="tabular mt-1 text-[34px] font-bold leading-none">{s.n.toLocaleString("id-ID")}</p>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {wilayah === "Indonesia" && nProv ? (
-              <span className="rounded-full bg-white/15 px-2 py-0.5 text-[11.5px] font-medium">{nProv} provinsi</span>
-            ) : null}
-            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[11.5px] font-medium">Sedang hujan {fmt(s.pct_hujan, 1)}%</span>
+    <div className={`glass relative overflow-hidden rounded-2xl p-5 ${className}`}>
+      <div aria-hidden className="pointer-events-none absolute -left-16 -top-24 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(52,198,182,0.22),transparent_65%)]" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-24 -right-10 h-64 w-64 rounded-full bg-[radial-gradient(circle,rgba(63,156,245,0.18),transparent_65%)]" />
+      <div className="relative flex h-full flex-col">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[12.5px] text-ink-3">Rata-rata suhu</p>
+            <p className="tabular mt-1 text-[64px] font-light leading-none tracking-tight text-ink">
+              {fmt(s.suhu_C, 1)}
+              <span className="align-top text-[26px] font-normal text-ink-2">°C</span>
+            </p>
           </div>
+          {dom && <Ring value={(dom.n / s.n) * 100} label={clusterNames[dom.cluster]} size={86} />}
         </div>
-        <Ring value={pct} label={dom ? clusterNames[dom.cluster] : undefined} size={84} />
+        <p className="mt-3 text-[15px] font-medium text-ink">
+          {kond ? `${KONDISI[kond.kategori] ?? kond.kategori} di ${fmt((kond.n / s.n) * 100, 0)}% kecamatan` : ""}
+        </p>
+        <p className="text-[12.5px] text-ink-3">
+          Suhu {fmt(s.suhu_min, 1)} sampai {fmt(s.suhu_max, 1)} °C · cincin: porsi zona dominan
+        </p>
+        <div className="mt-auto space-y-1.5 border-t border-line pt-3 text-[13px] text-ink-2">
+          <p className="flex justify-between gap-3">
+            <span className="text-ink-3">Wilayah</span>
+            <span className="font-medium text-ink">{wilayah}</span>
+          </p>
+          <p className="flex justify-between gap-3">
+            <span className="text-ink-3">Kecamatan</span>
+            <span className="tabular font-medium text-ink">{s.n.toLocaleString("id-ID")}</span>
+          </p>
+          <p className="flex justify-between gap-3">
+            <span className="text-ink-3">Waktu</span>
+            <span className="tabular font-medium text-ink">
+              {tanggal}, {meta.data?.meta.waktu.slice(0, 5)}
+            </span>
+          </p>
+        </div>
       </div>
-      <p className="relative mt-3 text-[11.5px] text-white/75">Cincin: porsi zona dominan {dom ? clusterNames[dom.cluster] : ""}</p>
     </div>
   );
 }
 
-function KpiCard({
-  metric,
-  s,
-  values,
-  active,
-  onClick,
-}: {
-  metric: MetricKey;
-  s?: ReturnType<typeof useSummary>["data"];
-  values?: number[];
-  active: boolean;
-  onClick: () => void;
-}) {
-  const m = METRICS[metric];
-  const label = metric === "suhu_C" ? "Rata-rata suhu" : m.label;
-  const value = s ? (s[metric as keyof typeof s] as number) : undefined;
-  const color = m.warm ? C.amber : C.brand;
+function SubCard({ title, children, onClick }: { title: string; children: ReactNode; onClick?: () => void }) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      aria-pressed={active}
-      className={`group flex flex-col rounded-xl border bg-surface p-3.5 text-left shadow-[0_1px_3px_rgba(16,40,80,0.05)] transition-colors duration-150 ${
-        active ? "border-brand-500 ring-2 ring-brand-100" : "border-line hover:border-brand-200"
-      }`}
+      disabled={!onClick}
+      className="glass-sub flex min-h-[190px] flex-col rounded-2xl p-4 text-left transition-colors duration-150 enabled:hover:bg-white/[0.06] disabled:cursor-default"
     >
-      <p className="text-[12px] font-medium text-ink-3">{label}</p>
-      <p className={`tabular mt-1 text-[22px] font-bold leading-tight ${m.warm ? "text-amber-700" : "text-ink"}`}>
-        {value === undefined ? "–" : fmt(value, m.digits)}
-        <span className="ml-1 text-[12.5px] font-medium text-ink-3">{m.unit}</span>
-      </p>
-      <RangeBar values={values} avg={value} color={color} digits={m.digits} />
+      <p className="text-[13px] font-medium text-ink-2">{title}</p>
+      {children}
     </button>
   );
 }
 
-/** Rentang nilai antar kecamatan: garis dari minimum ke maksimum, titik = posisi rata-rata. */
-function RangeBar({ values, avg, color, digits }: { values?: number[]; avg?: number; color: string; digits: number }) {
-  if (!values?.length || avg === undefined) return <div className="mt-auto h-[34px]" />;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const pos = max > min ? ((avg - min) / (max - min)) * 100 : 50;
+/** Angin: batang sebaran kecepatan angin, batang yang memuat rata-rata disorot. */
+function WindCard({ s, values, onClick }: { s?: Sum; values?: number[]; onClick: () => void }) {
+  const B = 16;
+  let bars: { h: number; hit: boolean }[] = [];
+  if (values?.length && s) {
+    const max = Math.max(...values);
+    const w = max / B || 1;
+    const c = new Array(B).fill(0) as number[];
+    for (const v of values) c[Math.min(B - 1, Math.floor(v / w))]++;
+    const top = Math.max(...c);
+    const hit = Math.min(B - 1, Math.floor(s.kecepatan_angin / w));
+    bars = c.map((n, i) => ({ h: Math.max(6, (n / top) * 100), hit: i === hit }));
+  }
   return (
-    <div className="mt-auto pt-3">
-      <div className="relative h-1.5 rounded-full" style={{ background: `${color}33` }}>
-        <span
-          className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_1px_3px_rgba(16,40,80,0.3)]"
-          style={{ left: `${pos}%`, background: color }}
-          title="Rata-rata"
-        />
+    <SubCard title="Kecepatan angin" onClick={onClick}>
+      <div className="mt-3 flex h-[78px] items-end gap-[3px]">
+        {bars.map((b, i) => (
+          <span key={i} className={`flex-1 rounded-full ${b.hit ? "bg-brand-500" : "bg-white/15"}`} style={{ height: `${b.h}%` }} />
+        ))}
       </div>
-      <div className="tabular mt-1.5 flex justify-between text-[10.5px] text-ink-3">
-        <span>Min {fmt(min, digits)}</span>
-        <span>Maks {fmt(max, digits)}</span>
+      <div className="mt-auto flex items-end justify-between pt-3">
+        <p className="tabular text-[30px] font-semibold leading-none text-ink">
+          {s ? fmt(s.kecepatan_angin, 2) : "–"}
+          <span className="ml-1 text-[13px] font-normal text-ink-3">m/s</span>
+        </p>
+        <p className="text-right text-[11px] text-ink-3">sebaran 0 sampai maks.</p>
       </div>
-    </div>
+    </SubCard>
+  );
+}
+
+/** Kelembapan: gauge setengah lingkaran 0-100%. */
+function HumidityGauge({ s, onClick }: { s?: Sum; onClick: () => void }) {
+  const v = s ? Math.max(0, Math.min(100, s.kelembapan)) : 0;
+  const R = 62;
+  const len = Math.PI * R;
+  return (
+    <SubCard title="Kelembapan" onClick={onClick}>
+      <div className="relative mx-auto mt-2 w-full max-w-[170px]">
+        <svg viewBox="0 0 160 92" className="w-full">
+          <defs>
+            <linearGradient id="gHum" x1="0" x2="1">
+              <stop offset="0" stopColor="#34C6B6" />
+              <stop offset="1" stopColor="#3F9CF5" />
+            </linearGradient>
+          </defs>
+          <path d={`M ${80 - R} 82 A ${R} ${R} 0 0 1 ${80 + R} 82`} fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="13" strokeLinecap="round" />
+          <path
+            d={`M ${80 - R} 82 A ${R} ${R} 0 0 1 ${80 + R} 82`}
+            fill="none"
+            stroke="url(#gHum)"
+            strokeWidth="13"
+            strokeLinecap="round"
+            strokeDasharray={`${(v / 100) * len} ${len}`}
+          />
+          {[0, 50, 100].map((t) => {
+            const a = Math.PI * (1 - t / 100);
+            return (
+              <text key={t} x={80 + (R - 22) * Math.cos(a)} y={82 - (R - 22) * Math.sin(a) + 3} textAnchor="middle" fontSize="8.5" fill="#7F8A99">
+                {t}
+              </text>
+            );
+          })}
+        </svg>
+      </div>
+      <p className="tabular mt-auto text-center text-[30px] font-semibold leading-none text-ink">
+        {s ? fmt(s.kelembapan, 0) : "–"}
+        <span className="ml-1 text-[13px] font-normal text-ink-3">%</span>
+      </p>
+    </SubCard>
+  );
+}
+
+/** Suhu: busur dari suhu minimum ke maksimum, titik menunjukkan rata-rata. */
+function TempArc({ s, onClick }: { s?: Sum; onClick: () => void }) {
+  const R = 60;
+  const t = s && s.suhu_max > s.suhu_min ? (s.suhu_C - s.suhu_min) / (s.suhu_max - s.suhu_min) : 0.5;
+  const a = Math.PI * (1 - t);
+  const x = 80 + R * Math.cos(a);
+  const y = 80 - R * Math.sin(a);
+  return (
+    <SubCard title="Rentang suhu" onClick={onClick}>
+      <div className="relative mx-auto mt-2 w-full max-w-[180px]">
+        <svg viewBox="0 0 160 96" className="w-full">
+          <defs>
+            <linearGradient id="gTemp" x1="0" x2="1">
+              <stop offset="0" stopColor="#5C8DF0" />
+              <stop offset="1" stopColor="#E2A33B" />
+            </linearGradient>
+          </defs>
+          <path d={`M ${80 - R} 80 A ${R} ${R} 0 0 1 ${80 + R} 80`} fill="none" stroke="url(#gTemp)" strokeWidth="2" strokeDasharray="3 5" opacity="0.8" />
+          <line x1={x} y1={y} x2={x} y2="80" stroke="rgba(226,163,59,0.35)" strokeWidth="1" />
+          <circle cx={x} cy={y} r="9" fill="rgba(226,163,59,0.25)" />
+          <circle cx={x} cy={y} r="5" fill="#E2A33B" />
+          <rect x={80 - R - 7} y="78" width="14" height="4" rx="2" fill="#5C8DF0" />
+          <rect x={80 + R - 7} y="78" width="14" height="4" rx="2" fill="#E2A33B" />
+        </svg>
+      </div>
+      <div className="mt-auto flex items-end justify-between gap-2 pt-1 text-[11.5px]">
+        <div>
+          <p className="text-[#8fb2f7]">Terendah</p>
+          <p className="tabular text-[14px] font-semibold text-ink">{s ? fmt(s.suhu_min, 1) : "–"} °C</p>
+        </div>
+        <div className="text-center">
+          <p className="text-ink-3">Rata-rata</p>
+          <p className="tabular text-[14px] font-semibold text-amber-700">{s ? fmt(s.suhu_C, 1) : "–"} °C</p>
+        </div>
+        <div className="text-right">
+          <p className="text-amber-700">Tertinggi</p>
+          <p className="tabular text-[14px] font-semibold text-ink">{s ? fmt(s.suhu_max, 1) : "–"} °C</p>
+        </div>
+      </div>
+    </SubCard>
+  );
+}
+
+function SmallStat({ label, value, unit, note, onClick }: { label: string; value: string; unit: string; note: string; onClick?: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={!onClick}
+      className="glass-sub flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition-colors duration-150 enabled:hover:bg-white/[0.06] disabled:cursor-default"
+    >
+      <div>
+        <p className="text-[12.5px] text-ink-2">{label}</p>
+        <p className="tabular mt-0.5 text-[24px] font-semibold leading-none text-ink">
+          {value}
+          <span className="ml-1 text-[12px] font-normal text-ink-3">{unit}</span>
+        </p>
+      </div>
+      <p className="max-w-[120px] text-right text-[11px] leading-snug text-ink-3">{note}</p>
+    </button>
   );
 }
 
@@ -308,7 +445,7 @@ function MapLegend({ colorBy, metric, values, clusters }: { colorBy: "cluster" |
       : binLabels(metric).map((label, i) => ({ color: rampStops(metric)[i]!, label, n: values.filter((v) => binIndex(metric, v) === i).length }));
   const title = colorBy === "cluster" ? "Zona iklim" : `${METRICS[metric].label} (${METRICS[metric].unit})`;
   return (
-    <div className="absolute bottom-6 left-3 z-[1001] min-w-[165px] rounded-lg border border-line bg-surface/95 px-3 py-2.5 shadow-[0_6px_18px_rgba(16,40,80,0.14)]">
+    <div className="absolute bottom-6 left-3 z-[1001] min-w-[165px] rounded-lg border border-line bg-[#171a20]/90 backdrop-blur-md px-3 py-2.5 shadow-[0_10px_24px_rgba(0,0,0,0.45)]">
       <p className="mb-1.5 text-[12px] font-semibold text-ink">{title}</p>
       <ul className="space-y-1">
         {rows.map((r) => (
@@ -429,7 +566,7 @@ function ZoneBars({ points, all, metric, clusters, filtered }: { points?: Point[
     const short = clusters.map((c) => c.nama.split("-")[0]);
     const series: object[] = [];
     if (filtered)
-      series.push({ name: "Nasional", type: "bar", barGap: "15%", barMaxWidth: 18, itemStyle: { color: "#cdd6e2", borderRadius: [3, 3, 0, 0] }, data: clusters.map((c) => +avg(all, c.id).toFixed(2)) });
+      series.push({ name: "Nasional", type: "bar", barGap: "15%", barMaxWidth: 18, itemStyle: { color: "rgba(255,255,255,0.22)", borderRadius: [3, 3, 0, 0] }, data: clusters.map((c) => +avg(all, c.id).toFixed(2)) });
     series.push({
       name: filtered ? "Wilayah terpilih" : "Indonesia",
       type: "bar",
@@ -491,7 +628,7 @@ function ProvinceTable({ points, names, selected, onSelect }: { points?: Point[]
   const vmin = Math.min(...rows.map((r) => r[metricCol]), 0);
 
   return (
-    <Panel pad={false} className="flex flex-col overflow-hidden xl:min-h-0 xl:flex-1">
+    <Panel pad={false} className="flex flex-col overflow-hidden">
       <PanelBar
         title="Ringkasan per provinsi"
         sub="Klik baris untuk memfilter dashboard"
@@ -516,9 +653,9 @@ function ProvinceTable({ points, names, selected, onSelect }: { points?: Point[]
           <Loading h={420} />
         </div>
       ) : (
-        <div className="max-h-[512px] overflow-auto xl:max-h-none xl:min-h-[320px] xl:flex-1 xl:[contain:size]">
+        <div className="max-h-[440px] overflow-auto">
           <table className="w-full text-[12.5px]">
-            <thead className="sticky top-0 z-10 bg-[#f6f8fb] text-left text-[10.5px] uppercase tracking-wide text-ink-3">
+            <thead className="sticky top-0 z-10 bg-white/[0.03] text-left text-[10.5px] uppercase tracking-wide text-ink-3">
               <tr>
                 <th className="py-2 pl-4 pr-2 font-semibold">#</th>
                 <th className="px-2 py-2 font-semibold">Provinsi</th>
@@ -538,7 +675,7 @@ function ProvinceTable({ points, names, selected, onSelect }: { points?: Point[]
                   <tr
                     key={r.prov}
                     onClick={() => onSelect(r.prov)}
-                    className={`cursor-pointer border-t border-line-2 transition-colors ${sel ? "bg-brand-50" : "hover:bg-[#f7f9fc]"}`}
+                    className={`cursor-pointer border-t border-line-2 transition-colors ${sel ? "bg-brand-50" : "hover:bg-white/[0.04]"}`}
                   >
                     <td className="tabular py-2 pl-4 pr-2 text-ink-3">{i + 1}</td>
                     <td className={`max-w-[150px] truncate px-2 py-2 font-medium ${sel ? "text-brand-700" : "text-ink"}`}>{r.prov}</td>
@@ -581,7 +718,7 @@ function Ranking() {
   const min = data ? Math.min(...data.map((r) => r.nilai)) : 0;
 
   return (
-    <Panel className="flex flex-col">
+    <Panel className="flex h-full flex-col">
       <PanelHeader
         title={`${order === "top" ? "Tertinggi" : "Terendah"}: ${m.label.toLowerCase()}`}
         sub={`10 kecamatan di ${f.provinsi ?? "Indonesia"}`}
@@ -601,18 +738,18 @@ function Ranking() {
       {!data ? (
         <Loading h={250} />
       ) : (
-        <ol className="-mx-1.5 max-h-[262px] space-y-0.5 overflow-y-auto">
+        <ol className="-mx-1.5 max-h-[262px] space-y-0.5 overflow-y-auto xl:max-h-none xl:min-h-0 xl:flex-1">
           {data.map((r, i) => {
             const w = metric === "suhu_C" || metric === "kelembapan" ? ((r.nilai - min * 0.9) / (max - min * 0.9)) * 100 : (r.nilai / max) * 100;
             return (
               <li key={`${r.kecamatan}-${r.provinsi}`}>
                 <button
                   onClick={() => f.setFocus({ lat: r.lat, lon: r.lon, label: r.kecamatan })}
-                  className="group flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1 text-left transition-colors duration-150 hover:bg-[#f5f8fc]"
+                  className="group flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1 text-left transition-colors duration-150 hover:bg-white/[0.04]"
                 >
                   <span
                     className={`tabular flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10.5px] font-semibold ${
-                      i < 3 ? "bg-brand-600 text-white" : "bg-[#eef1f6] text-ink-3"
+                      i < 3 ? "bg-brand-600 text-white" : "bg-white/[0.06] text-ink-3"
                     }`}
                   >
                     {i + 1}
@@ -678,19 +815,19 @@ function CheckLocation() {
   const input = "h-8 w-full rounded-lg border border-line bg-surface px-2.5 text-[12.5px] outline-none transition-colors hover:border-brand-200 focus:border-brand-500";
 
   return (
-    <div className="rounded-xl border border-line bg-surface p-4 shadow-[0_1px_3px_rgba(16,40,80,0.05)]">
+    <div className="glass rounded-2xl p-4">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-[13.5px] font-semibold text-ink">Cek Lokasimu</h3>
         <Pill>IDW</Pill>
       </div>
       <div className="space-y-2">
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-[1fr_1fr_auto_auto]">
+        <div className="grid grid-cols-2 gap-1.5">
           <input aria-label="Lintang" value={lat} onChange={(e) => setLat(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="Lintang" className={input} />
           <input aria-label="Bujur" value={lon} onChange={(e) => setLon(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} placeholder="Bujur" className={input} />
           <button onClick={submit} className="h-8 rounded-lg bg-brand-600 px-3 text-[12.5px] font-semibold text-white transition-colors duration-150 hover:bg-brand-700">
             Cek koordinat
           </button>
-          <button onClick={useGps} className="h-8 rounded-lg border border-line px-3 text-[12.5px] font-medium text-ink transition-colors duration-150 hover:bg-[#f5f8fc]">
+          <button onClick={useGps} className="h-8 rounded-lg border border-line px-3 text-[12.5px] font-medium text-ink transition-colors duration-150 hover:bg-white/[0.04]">
             Lokasi saya
           </button>
         </div>
@@ -722,9 +859,9 @@ function CheckLocation() {
                 </p>
               )}
             </div>
-            <dl className="grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+            <dl className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
               {(Object.keys(data.values) as MetricKey[]).map((k) => (
-                <div key={k} className="rounded-lg bg-[#f5f8fc] px-2 py-1.5">
+                <div key={k} className="rounded-lg bg-white/[0.04] px-2 py-1.5">
                   <dt className="text-[10.5px] text-ink-3">{METRICS[k].label}</dt>
                   <dd className={`tabular text-[13px] font-semibold ${METRICS[k].warm ? "text-amber-700" : "text-ink"}`}>{fmtMetric(k, data.values[k])}</dd>
                 </div>
