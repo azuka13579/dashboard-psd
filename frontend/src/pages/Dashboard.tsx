@@ -67,7 +67,7 @@ export default function Dashboard() {
 
         {/* Baris KPI */}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_1fr] [&>*]:min-w-0">
-          <HeroCard s={s} wilayah={wilayah} clusterNames={clusterNames} nProv={provinces.data?.length} />
+          <HeroCard s={s} wilayah={wilayah} clusterNames={clusterNames} />
           {(["suhu_C", "kelembapan", "kecepatan_angin", "tutupan_awan", "tekanan"] as MetricKey[]).map((k) => (
             <KpiCard key={k} metric={k} s={s} values={points.data?.map((p) => p[k])} active={f.metric === k} onClick={() => f.setMetric(k)} />
           ))}
@@ -220,12 +220,12 @@ export default function Dashboard() {
 
 /* ---------- Kartu KPI ---------- */
 
-function HeroCard({ s, wilayah, clusterNames, nProv }: { s?: ReturnType<typeof useSummary>["data"]; wilayah: string; clusterNames: string[]; nProv?: number }) {
+function HeroCard({ s, wilayah, clusterNames }: { s?: ReturnType<typeof useSummary>["data"]; wilayah: string; clusterNames: string[] }) {
   if (!s) return <Loading h={150} />;
   const dom = [...s.clusters].sort((a, b) => b.n - a.n)[0];
   const pct = dom ? (dom.n / s.n) * 100 : 0;
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-white/80 bg-gradient-to-br from-white/90 via-sky-100/90 to-sky-300/80 p-5 shadow-[0_12px_32px_rgba(30,110,190,0.18)] md:col-span-2 xl:col-span-1">
+    <div className="relative flex flex-col justify-center overflow-hidden rounded-3xl border border-white/80 bg-gradient-to-br from-white/90 via-sky-100/90 to-sky-300/80 p-5 shadow-[0_12px_32px_rgba(30,110,190,0.18)] md:col-span-2 xl:col-span-1">
       <svg aria-hidden className="absolute -right-12 -top-14 h-52 w-52 text-white/60" viewBox="0 0 200 200">
         <circle cx="100" cy="100" r="98" fill="none" stroke="currentColor" strokeWidth="1.5" />
         <circle cx="100" cy="100" r="72" fill="none" stroke="currentColor" strokeWidth="1.5" />
@@ -239,13 +239,6 @@ function HeroCard({ s, wilayah, clusterNames, nProv }: { s?: ReturnType<typeof u
         </div>
         <Ring value={pct} label={dom ? clusterNames[dom.cluster] : undefined} size={84} tone="light" />
       </div>
-      <div className="relative mt-3 flex flex-wrap gap-1.5">
-        {wilayah === "Indonesia" && nProv ? (
-          <span className="rounded-full bg-white/70 px-2.5 py-0.5 text-[11.5px] font-medium text-brand-800 ring-1 ring-white">{nProv} provinsi</span>
-        ) : null}
-        <span className="rounded-full bg-white/70 px-2.5 py-0.5 text-[11.5px] font-medium text-brand-800 ring-1 ring-white">Sedang hujan {fmt(s.pct_hujan, 1)}%</span>
-      </div>
-      <p className="relative mt-2 text-[11.5px] text-ink-2">Cincin: porsi zona dominan {dom ? clusterNames[dom.cluster] : ""}</p>
     </div>
   );
 }
