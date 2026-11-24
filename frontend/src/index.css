@@ -27,11 +27,20 @@
   --color-ink: #122033;
   --color-ink-2: #46566a;
   --color-ink-3: #6b7a8c;
-  --color-line: #e3e8ef;
+  --color-line: #e6eaf0;
   --color-line-2: #edf1f6;
   --color-surface: #ffffff;
-  --color-canvas: #edf2f7;
+  --color-canvas: #f3f5f9;
   --color-navy-50: #eaf1f8;
+
+  /* Aksen biru utama (gaya kartu dashboard) */
+  --color-brand-800: #123f80;
+  --color-brand-700: #1850a3;
+  --color-brand-600: #1f63c6;
+  --color-brand-500: #3b7fe0;
+  --color-brand-200: #c3d7f4;
+  --color-brand-100: #e1ebfa;
+  --color-brand-50: #f1f6fd;
 }
 
 html, body, #root { min-height: 100%; }

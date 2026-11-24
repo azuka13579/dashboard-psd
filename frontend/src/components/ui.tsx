@@ -4,10 +4,10 @@ import { CLUSTER_COLORS } from "../lib/theme";
 
 type Tone = "light" | "dark";
 
-/** Panel dasar: permukaan putih dengan garis tipis. */
+/** Kartu dasar: putih, sudut membulat, bayangan lembut. */
 export function Panel({ children, className = "", pad = true }: { children: ReactNode; className?: string; pad?: boolean }) {
   return (
-    <div className={`rounded-lg border border-line bg-surface shadow-[0_1px_2px_rgba(15,42,68,0.05)] ${pad ? "p-4" : ""} ${className}`}>{children}</div>
+    <div className={`rounded-xl border border-line bg-surface shadow-[0_1px_3px_rgba(16,40,80,0.05)] ${pad ? "p-4" : ""} ${className}`}>{children}</div>
   );
 }
 
@@ -15,54 +15,54 @@ export function PanelHeader({ title, sub, right, className = "" }: { title: stri
   return (
     <div className={`mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2 ${className}`}>
       <div className="min-w-0">
-        <h3 className="text-[14px] font-semibold text-navy-900">{title}</h3>
-        {sub && <p className="mt-0.5 text-[12.5px] text-ink-3">{sub}</p>}
+        <h3 className="text-[14px] font-semibold text-ink">{title}</h3>
+        {sub && <p className="mt-0.5 text-[12px] text-ink-3">{sub}</p>}
       </div>
       {right}
     </div>
   );
 }
 
-/** Strip judul navy di bagian atas panel (dipakai dengan Panel pad={false}). */
+/** Header kartu untuk Panel pad={false}: judul di kiri, kontrol di kanan, garis tipis di bawah. */
 export function PanelBar({ title, sub, right }: { title: string; sub?: string; right?: ReactNode }) {
   return (
-    <div className="on-dark flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-t-[7px] bg-navy-900 px-4 py-2.5 text-white">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line-2 px-4 py-3">
       <div className="min-w-0">
-        <h3 className="text-[14px] font-semibold">{title}</h3>
-        {sub && <p className="text-[12px] text-sky-100/75">{sub}</p>}
+        <h3 className="text-[14px] font-semibold text-ink">{title}</h3>
+        {sub && <p className="text-[12px] text-ink-3">{sub}</p>}
       </div>
       {right}
     </div>
   );
 }
 
-/** Pita judul halaman berwarna navy selebar layar. Children (KPI, filter) ikut di dalam pita. */
+/** Judul halaman sederhana di atas kanvas. */
 export function PageHeader({ title, desc, right, children, flush }: { title: string; desc?: ReactNode; right?: ReactNode; children?: ReactNode; flush?: boolean }) {
   return (
-    <div className={`bleed-navy on-dark -mt-6 pb-5 pt-6 text-white ${flush ? "" : "mb-5"}`}>
+    <div className={flush ? "mb-3" : "mb-5"}>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="max-w-3xl">
-          <h1 className="text-[22px] font-bold leading-tight">{title}</h1>
-          {desc && <p className="mt-1.5 text-[13.5px] leading-relaxed text-sky-100/80">{desc}</p>}
+          <h1 className="text-[20px] font-bold leading-tight text-ink">{title}</h1>
+          {desc && <p className="mt-1 text-[13.5px] leading-relaxed text-ink-3">{desc}</p>}
         </div>
         {right}
       </div>
-      {children && <div className="mt-5 space-y-4">{children}</div>}
+      {children && <div className="mt-4 space-y-4">{children}</div>}
     </div>
   );
 }
 
-/** Judul bagian di dalam halaman, dengan penanda navy kecil. */
+/** Judul bagian di dalam halaman. */
 export function Section({ title, desc, children, id, right }: { title: string; desc?: string; children: ReactNode; id?: string; right?: ReactNode }) {
   return (
     <section id={id} className="scroll-mt-28">
       <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="flex items-center gap-2.5 text-[17px] font-semibold text-navy-900">
-            <span aria-hidden className="h-4 w-1 rounded-full bg-sky-500" />
+          <h2 className="flex items-center gap-2.5 text-[16px] font-semibold text-ink">
+            <span aria-hidden className="h-4 w-1 rounded-full bg-brand-600" />
             {title}
           </h2>
-          {desc && <p className="mt-0.5 max-w-3xl pl-3.5 text-[13px] text-ink-3">{desc}</p>}
+          {desc && <p className="mt-0.5 max-w-3xl pl-3.5 text-[12.5px] text-ink-3">{desc}</p>}
         </div>
         {right}
       </div>
@@ -73,72 +73,106 @@ export function Section({ title, desc, children, id, right }: { title: string; d
 
 export type Kpi = { label: string; value: string; unit?: string; hint?: string; accent?: "amber" | "sky" };
 
-/** Strip KPI yang dibagi garis tipis. Tone "dark" untuk di atas pita navy. */
-export function KpiStrip({ items, tone = "light" }: { items: Kpi[]; tone?: Tone }) {
-  const dark = tone === "dark";
+/** Deret kartu KPI kecil. */
+export function KpiStrip({ items }: { items: Kpi[]; tone?: Tone }) {
   return (
-    <div
-      className={`grid grid-cols-2 overflow-hidden rounded-lg sm:grid-cols-3 xl:grid-flow-col xl:auto-cols-fr xl:grid-cols-none ${
-        dark ? "bg-navy-800 ring-1 ring-white/12" : "border border-line bg-surface"
-      }`}
-    >
-      {items.map((k) => {
-        const valueColor = dark ? (k.accent === "amber" ? "text-[#F2C46B]" : "text-white") : k.accent === "amber" ? "text-amber-700" : "text-navy-900";
-        return (
-          <div key={k.label} className={`border-b border-r px-4 py-3 xl:border-b-0 xl:last:border-r-0 ${dark ? "border-white/10" : "border-line-2"}`}>
-            <p className={`text-[12px] font-medium ${dark ? "text-sky-100/70" : "text-ink-3"}`}>{k.label}</p>
-            <p className={`tabular mt-1 text-[21px] font-semibold leading-tight ${valueColor}`}>
-              {k.value}
-              {k.unit && <span className={`ml-1 text-[13px] font-medium ${dark ? "text-sky-100/65" : "text-ink-3"}`}>{k.unit}</span>}
-            </p>
-            {k.hint && <p className={`tabular mt-0.5 truncate text-[12px] ${dark ? "text-sky-100/60" : "text-ink-3"}`}>{k.hint}</p>}
-          </div>
-        );
-      })}
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-flow-col xl:auto-cols-fr xl:grid-cols-none">
+      {items.map((k) => (
+        <div key={k.label} className="rounded-xl border border-line bg-surface px-4 py-3 shadow-[0_1px_3px_rgba(16,40,80,0.05)]">
+          <p className="text-[12px] font-medium text-ink-3">{k.label}</p>
+          <p className={`tabular mt-1 text-[20px] font-bold leading-tight ${k.accent === "amber" ? "text-amber-700" : "text-ink"}`}>
+            {k.value}
+            {k.unit && <span className="ml-1 text-[12.5px] font-medium text-ink-3">{k.unit}</span>}
+          </p>
+          {k.hint && <p className="tabular mt-0.5 truncate text-[11.5px] text-ink-3">{k.hint}</p>}
+        </div>
+      ))}
     </div>
   );
 }
 
+/** Grup tombol berbentuk pil, pilihan aktif berupa chip putih. */
 export function Segmented<T extends string>({
   value,
   options,
   onChange,
   size = "md",
   label,
-  tone = "light",
 }: {
   value: T;
-  options: { value: T; label: string }[];
+  options: { value: T; label: string; badge?: string | number }[];
   onChange: (v: T) => void;
   size?: "sm" | "md";
   label?: string;
   tone?: Tone;
 }) {
-  const dark = tone === "dark";
   return (
-    <div role="radiogroup" aria-label={label} className={`inline-flex flex-wrap rounded-md p-0.5 ${dark ? "bg-white/10" : "bg-navy-50"}`}>
+    <div role="radiogroup" aria-label={label} className="inline-flex flex-wrap gap-0.5 rounded-full bg-[#eef1f6] p-[3px]">
       {options.map((o) => {
         const active = value === o.value;
-        const cls = dark
-          ? active
-            ? "bg-white text-navy-900"
-            : "text-sky-100/80 hover:text-white"
-          : active
-            ? "bg-navy-900 text-white shadow-[0_1px_2px_rgba(15,42,68,0.2)]"
-            : "text-navy-800/80 hover:text-navy-900";
         return (
           <button
             key={o.value}
             role="radio"
             aria-checked={active}
             onClick={() => onChange(o.value)}
-            className={`rounded-[5px] font-medium transition-colors duration-150 ${size === "sm" ? "px-2.5 py-1 text-[12px]" : "px-3 py-1.5 text-[13px]"} ${cls}`}
+            className={`inline-flex items-center gap-1.5 rounded-full font-medium transition-all duration-150 ${size === "sm" ? "px-2.5 py-[3px] text-[12px]" : "px-3.5 py-1.5 text-[13px]"} ${
+              active ? "bg-surface text-brand-700 shadow-[0_1px_3px_rgba(16,40,80,0.14)]" : "text-ink-3 hover:text-ink"
+            }`}
           >
             {o.label}
+            {o.badge !== undefined && (
+              <span className={`tabular rounded-full px-1.5 text-[10.5px] ${active ? "bg-brand-100 text-brand-700" : "bg-line text-ink-3"}`}>{o.badge}</span>
+            )}
           </button>
         );
       })}
     </div>
+  );
+}
+
+/** Label pil kecil. */
+export function Pill({ children, tone = "brand" }: { children: ReactNode; tone?: "brand" | "amber" | "neutral" }) {
+  const cls = tone === "amber" ? "bg-amber-50 text-amber-700" : tone === "neutral" ? "bg-[#eef1f6] text-ink-2" : "bg-brand-50 text-brand-700";
+  return <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-medium ${cls}`}>{children}</span>;
+}
+
+/** Cincin persentase (0-100). */
+export function Ring({ value, size = 76, stroke = 7, label }: { value: number; size?: number; stroke?: number; label?: string }) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const v = Math.max(0, Math.min(100, value));
+  return (
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#fff" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${(v / 100) * c} ${c}`} />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+        <span className="tabular text-[15px] font-bold text-white">{v.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%</span>
+        {label && <span className="mt-1 text-[9.5px] text-white/75">{label}</span>}
+      </div>
+    </div>
+  );
+}
+
+/** Histogram mini (sebaran nilai) untuk kartu KPI. */
+export function MiniHist({ values, color, bins = 18, height = 34 }: { values: number[]; color: string; bins?: number; height?: number }) {
+  if (values.length < 2) return <div style={{ height }} />;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const w = (max - min) / bins || 1;
+  const counts = new Array(bins).fill(0);
+  for (const v of values) counts[Math.min(bins - 1, Math.floor((v - min) / w))]++;
+  const top = Math.max(...counts);
+  const W = 120;
+  const pts = counts.map((n, i) => [(i / (bins - 1)) * W, height - 2 - (n / top) * (height - 4)]);
+  const line = pts.map((p, i) => `${i ? "L" : "M"}${p[0]!.toFixed(1)},${p[1]!.toFixed(1)}`).join(" ");
+  return (
+    <svg viewBox={`0 0 ${W} ${height}`} preserveAspectRatio="none" className="w-full" style={{ height }} aria-hidden>
+      <path d={`${line} L${W},${height} L0,${height} Z`} fill={color} opacity={0.12} />
+      <path d={line} fill="none" stroke={color} strokeWidth={1.6} strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+    </svg>
   );
 }
 
@@ -147,7 +181,7 @@ export function Chart({ option, height = 280, onEvents }: { option: object; heig
 }
 
 export function ClusterDot({ id, size = 9, onDark }: { id: number; size?: number; onDark?: boolean }) {
-  return <span aria-hidden className={`inline-block shrink-0 rounded-[3px] ${onDark ? "ring-1 ring-white/60" : ""}`} style={{ width: size, height: size, background: CLUSTER_COLORS[id] }} />;
+  return <span aria-hidden className={`inline-block shrink-0 rounded-full ${onDark ? "ring-1 ring-white/60" : ""}`} style={{ width: size, height: size, background: CLUSTER_COLORS[id] }} />;
 }
 
 export function ClusterLegend({ clusters, tone = "light" }: { clusters: { id: number; nama: string }[]; tone?: Tone }) {
@@ -164,12 +198,12 @@ export function ClusterLegend({ clusters, tone = "light" }: { clusters: { id: nu
 }
 
 export function Loading({ h = 200, tone = "light" }: { h?: number; tone?: Tone }) {
-  return <div className={`animate-pulse rounded-md ${tone === "dark" ? "bg-white/10" : "bg-line-2"}`} style={{ height: h }} />;
+  return <div className={`animate-pulse rounded-lg ${tone === "dark" ? "bg-white/10" : "bg-line-2"}`} style={{ height: h }} />;
 }
 
 export function ErrorBox({ error }: { error: unknown }) {
   return (
-    <div className="rounded-lg border border-amber-600/30 bg-amber-50 px-4 py-3 text-[13px] text-amber-700">
+    <div className="rounded-xl border border-amber-600/30 bg-amber-50 px-4 py-3 text-[13px] text-amber-700">
       {error instanceof Error ? error.message : "Terjadi kesalahan"}. Pastikan backend berjalan di port 3000, lalu muat ulang halaman.
     </div>
   );
@@ -178,10 +212,10 @@ export function ErrorBox({ error }: { error: unknown }) {
 export function Table({ head, rows, align, dense }: { head: ReactNode[]; rows: ReactNode[][]; align?: ("l" | "r")[]; dense?: boolean }) {
   const py = dense ? "py-1.5" : "py-2";
   return (
-    <div className="overflow-x-auto rounded-md border border-line-2">
+    <div className="overflow-x-auto rounded-lg border border-line-2">
       <table className="w-full text-[13px]">
         <thead>
-          <tr className="bg-navy-50 text-left text-[12px] text-navy-800">
+          <tr className="bg-[#f6f8fb] text-left text-[11.5px] uppercase tracking-wide text-ink-3">
             {head.map((h, i) => (
               <th key={i} className={`px-3 py-2 font-semibold ${align?.[i] === "r" ? "text-right" : ""}`}>
                 {h}
@@ -191,7 +225,7 @@ export function Table({ head, rows, align, dense }: { head: ReactNode[]; rows: R
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-t border-line-2 transition-colors hover:bg-navy-50/50">
+            <tr key={i} className="border-t border-line-2 transition-colors hover:bg-brand-50/60">
               {r.map((c, j) => (
                 <td key={j} className={`px-3 ${py} text-ink ${align?.[j] === "r" ? "tabular text-right" : ""}`}>
                   {c}

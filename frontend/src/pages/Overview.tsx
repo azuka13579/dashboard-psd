@@ -190,7 +190,7 @@ export default function Overview() {
               <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 text-[12.5px]">
                 {ALUR.map(([a, b], i) => (
                   <span key={a} className="inline-flex items-center gap-1.5">
-                    <span title={b} className="rounded bg-navy-900 px-2 py-0.5 font-medium text-white">
+                    <span title={b} className="rounded-full bg-brand-50 px-2.5 py-0.5 text-brand-700 font-medium">
                       {a}
                     </span>
                     {i < ALUR.length - 1 && (
@@ -208,7 +208,7 @@ export default function Overview() {
             <ul className="space-y-2 text-[13.5px] leading-relaxed text-ink-2">
               {TUJUAN.map((t) => (
                 <li key={t} className="flex gap-2.5">
-                  <span aria-hidden className="mt-[7px] h-2 w-2 shrink-0 rounded-[3px] bg-sky-500" />
+                  <span aria-hidden className="mt-[7px] h-2 w-2 shrink-0 rounded-full bg-brand-600" />
                   {t}
                 </li>
               ))}
@@ -235,7 +235,7 @@ export default function Overview() {
             head={["Kolom", "Deskripsi", "Tipe", "Kosong", "Unik"]}
             align={["l", "l", "l", "r", "r"]}
             rows={data.columns.map((c) => [
-              <code className="font-mono text-[12px] text-navy-800">{c.nama}</code>,
+              <code className="font-mono text-[12px] text-brand-700">{c.nama}</code>,
               <span className="text-ink-2">{DICTIONARY[c.nama] ?? "-"}</span>,
               <span className="text-[12px] text-ink-3">{c.dtype}</span>,
               c.missing ? <span className="font-medium text-amber-700">{c.missing}</span> : "0",
@@ -288,7 +288,7 @@ export default function Overview() {
               {Object.entries(kat).map(([k, v]) => (
                 <div key={k} className="px-3 py-2">
                   <p className="text-[12px] text-ink-3">{KATEGORI_LABEL[k] ?? k}</p>
-                  <p className="tabular text-[17px] font-semibold text-navy-900">
+                  <p className="tabular text-[17px] font-semibold text-ink">
                     {fmt((v / totalKat) * 100, 1)}
                     <span className="text-[12px] font-medium text-ink-3">%</span>
                   </p>

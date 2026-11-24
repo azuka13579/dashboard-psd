@@ -6,6 +6,8 @@ export const CLUSTER_COLORS = ["#B97600", "#4096D8", "#2D5F96"] as const;
 export const C = {
   navy: "#0F2A44",
   navy700: "#2D5F96",
+  brand: "#1F63C6",
+  brandSoft: "#C3D7F4",
   sky: "#4096D8",
   amber: "#B97600",
   ink: "#13202E",

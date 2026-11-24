@@ -111,7 +111,7 @@ export default function Modelling() {
   const loocv = m.idw.loocv[idwP]!;
   const totalRows = meta.data.meta.n_baris;
   const missingTotal = Object.values(pre.missing_sebelum).reduce((a, b) => a + b, 0);
-  const code = (s: string) => <code className="font-mono text-[12px] text-navy-800">{s}</code>;
+  const code = (s: string) => <code className="font-mono text-[12px] text-brand-700">{s}</code>;
 
   const steps: { title: string; result: string; body: ReactNode }[] = [
     {
@@ -226,7 +226,7 @@ export default function Modelling() {
         <div className="space-y-3">
           <div className="flex flex-wrap gap-1.5">
             {meta.data.feature_labels.map((f) => (
-              <span key={f} className="rounded border border-sky-500/40 bg-sky-50 px-2 py-0.5 font-mono text-[12px] text-navy-800">
+              <span key={f} className="rounded-full border border-brand-200 bg-brand-50 px-2.5 py-0.5 font-mono text-[12px] text-brand-700">
                 {f}
               </span>
             ))}
@@ -271,9 +271,9 @@ export default function Modelling() {
           <ol>
             {steps.map((s) => (
               <li key={s.title} className="grid border-b border-line-2 last:border-0 md:grid-cols-[230px_1fr]">
-                <div className="bg-navy-50 px-4 py-3.5 md:border-r md:border-line-2">
-                  <h3 className="text-[14px] font-semibold text-navy-900">{s.title}</h3>
-                  <p className="mt-1 inline-block rounded bg-navy-900 px-1.5 py-0.5 text-[11.5px] font-medium text-white">{s.result}</p>
+                <div className="bg-[#f8fafc] px-4 py-3.5 md:border-r md:border-line-2">
+                  <h3 className="text-[14px] font-semibold text-ink">{s.title}</h3>
+                  <p className="mt-1 inline-block rounded-full bg-brand-50 px-2 py-0.5 text-[11.5px] font-semibold text-brand-700">{s.result}</p>
                 </div>
                 <div className="max-w-[85ch] px-4 py-3.5 text-[13.5px] leading-relaxed text-ink-2">{s.body}</div>
               </li>
@@ -353,7 +353,7 @@ export default function Modelling() {
           <div className="overflow-x-auto rounded-md border border-line-2 [&_td:first-child]:pl-3">
             <table className="w-full min-w-[640px] text-[13px]">
               <thead>
-                <tr className="bg-navy-900 text-left text-white">
+                <tr className="bg-brand-600 text-left text-white">
                   <th className="w-[180px] py-2.5 pl-3 pr-3 text-[12px] font-medium text-sky-100/75">Fitur</th>
                   {m.clusters.map((c) => (
                     <th key={c.id} className="px-3 py-2.5 text-right">
@@ -439,12 +439,12 @@ export default function Modelling() {
                   `${fmt(r.rmse, 2)} ${METRICS[f].unit}`,
                   `${fmt(r.mae, 2)} ${METRICS[f].unit}`,
                   `${fmt(r.std, 2)} ${METRICS[f].unit}`,
-                  <span className="font-semibold text-navy-700">{fmt((r.rmse / r.std) * 100, 0)}%</span>,
+                  <span className="font-semibold text-brand-700">{fmt((r.rmse / r.std) * 100, 0)}%</span>,
                 ];
               })}
             />
             <div className="space-y-2.5 text-[13.5px] leading-relaxed text-ink-2">
-              <p className="rounded-md bg-navy-900 px-3 py-2.5 font-mono text-[12.5px] text-white">ẑ(x) = Σ wᵢ·zᵢ / Σ wᵢ, &nbsp; wᵢ = 1 / dᵢᵖ</p>
+              <p className="rounded-lg bg-brand-600 px-3 py-2.5 font-mono text-[12.5px] text-white">ẑ(x) = Σ wᵢ·zᵢ / Σ wᵢ, &nbsp; wᵢ = 1 / dᵢᵖ</p>
               <p>
                 Setiap kecamatan diprediksi dari {m.idw.k} tetangga terdekatnya tanpa memakai nilainya sendiri. Galat suhu (RMSE{" "}
                 {fmt(m.idw.loocv["2"]!.suhu_C!.rmse, 2)} °C) jauh lebih kecil dari variasi suhu antar kecamatan ({fmt(m.idw.loocv["2"]!.suhu_C!.std, 2)} °C),
