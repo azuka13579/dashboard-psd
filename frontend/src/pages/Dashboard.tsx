@@ -40,7 +40,7 @@ export default function Dashboard() {
     <div className="space-y-8">
       <div className="space-y-4">
         {/* Toolbar filter: tetap terlihat saat menggulir */}
-        <div className="glass z-[1100] rounded-2xl px-4 py-2.5 md:sticky md:top-[64px]">
+        <div className="glass relative z-[1100] rounded-2xl px-4 py-2.5 md:sticky md:top-[64px]">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <h1 className="mr-2 text-[17px] font-bold text-ink">Monitoring Cuaca Kecamatan</h1>
             <select
@@ -66,9 +66,9 @@ export default function Dashboard() {
         </div>
 
         {/* Baris KPI */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[1.45fr_1fr_1fr_1fr_1fr] [&>*]:min-w-0">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_1fr] [&>*]:min-w-0">
           <HeroCard s={s} wilayah={wilayah} clusterNames={clusterNames} nProv={provinces.data?.length} />
-          {(["suhu_C", "kelembapan", "kecepatan_angin", "tutupan_awan"] as MetricKey[]).map((k) => (
+          {(["suhu_C", "kelembapan", "kecepatan_angin", "tutupan_awan", "tekanan"] as MetricKey[]).map((k) => (
             <KpiCard key={k} metric={k} s={s} values={points.data?.map((p) => p[k])} active={f.metric === k} onClick={() => f.setMetric(k)} />
           ))}
         </div>
@@ -196,11 +196,11 @@ export default function Dashboard() {
                     </span>
                     <Pill tone="neutral">{fmt(r.porsi * 100, 0)}% kecamatan</Pill>
                   </div>
-                  <dl className="grid gap-x-5 gap-y-2 md:grid-cols-3">
+                  <dl className="grid gap-2.5 md:grid-cols-3">
                     {r.items.map((it) => (
-                      <div key={it.sektor}>
-                        <dt className="text-[12px] font-semibold text-brand-700">{it.sektor}</dt>
-                        <dd className="mt-0.5 text-[12.5px] leading-relaxed text-ink-2">{it.isi}</dd>
+                      <div key={it.sektor} className="rounded-2xl border border-white/80 bg-white/55 px-3 py-2.5 shadow-[0_2px_8px_rgba(30,80,150,0.06)]">
+                        <dt className="border-b border-brand-100 pb-1 text-[12px] font-semibold text-brand-700">{it.sektor}</dt>
+                        <dd className="mt-1.5 text-[12.5px] leading-relaxed text-ink-2">{it.isi}</dd>
                       </div>
                     ))}
                   </dl>
@@ -233,9 +233,9 @@ function HeroCard({ s, wilayah, clusterNames, nProv }: { s?: ReturnType<typeof u
       </svg>
       <div className="relative flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[19px] font-medium leading-tight text-ink">Kecamatan</p>
+          <p className="text-[19px] font-semibold leading-tight text-ink">Kecamatan</p>
           <p className="text-[12.5px] text-ink-2">dianalisis · {wilayah}</p>
-          <p className="tabular mt-2 text-[52px] font-extralight leading-none tracking-tight text-ink">{s.n.toLocaleString("id-ID")}</p>
+          <p className="tabular mt-2 text-[52px] font-semibold leading-none tracking-tight text-ink">{s.n.toLocaleString("id-ID")}</p>
         </div>
         <Ring value={pct} label={dom ? clusterNames[dom.cluster] : undefined} size={84} tone="light" />
       </div>
@@ -279,37 +279,89 @@ function KpiCard({
     <button
       onClick={onClick}
       aria-pressed={active}
-      className={`glass group flex flex-col rounded-3xl p-4 text-left transition-all duration-200 ${
-        active ? "!border-sky-300 ring-2 ring-sky-300/60" : "hover:-translate-y-0.5"
+      className={`group relative flex flex-col rounded-3xl p-4 text-left transition-all duration-200 ${
+        active
+          ? "-translate-y-0.5 border border-white/40 bg-gradient-to-br from-sky-500 via-brand-600 to-brand-800 text-white shadow-[0_14px_30px_rgba(31,99,198,0.38)]"
+          : "glass hover:-translate-y-0.5"
       }`}
     >
-      <p className="text-[14px] font-medium text-ink">{label}</p>
-      <p className="text-[11px] text-ink-3">Rata-rata antar kecamatan</p>
-      <p className="tabular mt-2 text-[34px] font-extralight leading-none tracking-tight text-ink">
+      <div className="flex items-start justify-between gap-2">
+        <p className={`text-[14px] font-semibold ${active ? "text-white" : "text-ink"}`}>{label}</p>
+      </div>
+      <p className={`text-[11px] font-medium ${active ? "text-white/75" : "text-ink-3"}`}>Rata-rata antar kecamatan</p>
+      <p className={`tabular mt-2 text-[34px] font-semibold leading-none tracking-tight ${active ? "text-white" : "text-ink"}`}>
         {value === undefined ? "–" : fmt(value, m.digits)}
-        <span className="ml-1 text-[14px] font-normal text-ink-3">{m.unit}</span>
+        <span className={`ml-1 text-[14px] font-medium ${active ? "text-white/75" : "text-ink-3"}`}>{m.unit}</span>
       </p>
-      <RangeBar values={values} avg={value} track={TRACK[metric]} digits={m.digits} />
+      <RangeBar values={values} avg={value} track={TRACK[metric]} ticks={TICKS[metric]} digits={m.digits} onDark={active} />
     </button>
   );
 }
 
+/** Metrik yang track-nya berupa deretan batang vertikal (gaya kartu cuaca): warna awal → akhir. */
+const TICKS: Partial<Record<MetricKey, [string, string]>> = {
+  kelembapan: ["#06b6d4", "#a5f3fc"],
+  tutupan_awan: ["#d9a90f", "#f4d35e"],
+};
+
+function mixHex(a: string, b: string, t: number) {
+  const pa = parseInt(a.slice(1), 16);
+  const pb = parseInt(b.slice(1), 16);
+  const ch = (s: number) => Math.round(((pa >> s) & 255) + (((pb >> s) & 255) - ((pa >> s) & 255)) * t);
+  return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+}
+
 /** Rentang nilai antar kecamatan: track dari minimum ke maksimum, pegangan putih = posisi rata-rata. */
-function RangeBar({ values, avg, track, digits }: { values?: number[]; avg?: number; track: string; digits: number }) {
+function RangeBar({
+  values,
+  avg,
+  track,
+  digits,
+  onDark,
+  ticks,
+}: {
+  values?: number[];
+  avg?: number;
+  track: string;
+  digits: number;
+  onDark?: boolean;
+  ticks?: [string, string];
+}) {
   if (!values?.length || avg === undefined) return <div className="mt-auto h-[38px]" />;
   const min = Math.min(...values);
   const max = Math.max(...values);
   const pos = max > min ? ((avg - min) / (max - min)) * 100 : 50;
+  const N = 28;
   return (
     <div className="mt-auto pt-4">
-      <div className={`relative h-3 rounded-full ${track}`}>
-        <span
-          className="absolute top-1/2 h-5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_1px_4px_rgba(16,40,80,0.35)] ring-1 ring-black/5"
-          style={{ left: `${pos}%` }}
-          title="Rata-rata"
-        />
-      </div>
-      <div className="tabular mt-1.5 flex justify-between text-[10.5px] text-ink-3">
+      {ticks ? (
+        <div className="relative flex h-3 items-stretch gap-[3px]">
+          {Array.from({ length: N }, (_, i) => {
+            const filled = ((i + 0.5) / N) * 100 <= pos;
+            return (
+              <span
+                key={i}
+                className="flex-1 rounded-[2px] transition-opacity duration-300"
+                style={{ background: mixHex(ticks[0], ticks[1], i / (N - 1)), opacity: filled ? 1 : onDark ? 0.45 : 0.3 }}
+              />
+            );
+          })}
+          <span
+            className="absolute top-1/2 h-5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_1px_4px_rgba(16,40,80,0.35)] ring-1 ring-black/5"
+            style={{ left: `${pos}%` }}
+            title="Rata-rata"
+          />
+        </div>
+      ) : (
+        <div className={`relative h-3 rounded-full ${track} ${onDark ? "ring-1 ring-white/50" : ""}`}>
+          <span
+            className="absolute top-1/2 h-5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_1px_4px_rgba(16,40,80,0.35)] ring-1 ring-black/5"
+            style={{ left: `${pos}%` }}
+            title="Rata-rata"
+          />
+        </div>
+      )}
+      <div className={`tabular mt-1.5 flex justify-between text-[10.5px] ${onDark ? "text-white/80" : "text-ink-3"}`}>
         <span>Min {fmt(min, digits)}</span>
         <span>Maks {fmt(max, digits)}</span>
       </div>
@@ -696,7 +748,7 @@ function CheckLocation() {
   const input = "h-8 w-full rounded-full border border-white/80 bg-white/70 px-3.5 text-[12.5px] outline-none transition-colors hover:border-brand-200 focus:border-brand-500";
 
   return (
-    <div className="glass rounded-3xl p-5">
+    <div className="glass relative rounded-3xl p-5">
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-[13.5px] font-semibold text-ink">Cek Lokasimu</h3>
         <Pill>IDW</Pill>

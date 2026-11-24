@@ -7,7 +7,7 @@ type Tone = "light" | "dark";
 /** Kartu dasar: putih, sudut membulat, bayangan lembut. */
 export function Panel({ children, className = "", pad = true }: { children: ReactNode; className?: string; pad?: boolean }) {
   return (
-    <div className={`glass rounded-3xl ${pad ? "p-5" : ""} ${className}`}>{children}</div>
+    <div className={`glass relative rounded-3xl ${pad ? "p-5" : ""} ${className}`}>{children}</div>
   );
 }
 
@@ -78,7 +78,7 @@ export function KpiStrip({ items }: { items: Kpi[]; tone?: Tone }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-flow-col xl:auto-cols-fr xl:grid-cols-none">
       {items.map((k) => (
-        <div key={k.label} className="glass rounded-2xl px-4 py-3">
+        <div key={k.label} className="glass relative rounded-2xl px-4 py-3">
           <p className="text-[12px] font-medium text-ink-3">{k.label}</p>
           <p className={`tabular mt-1 text-[26px] font-light leading-tight ${k.accent === "amber" ? "text-amber-700" : "text-ink"}`}>
             {k.value}

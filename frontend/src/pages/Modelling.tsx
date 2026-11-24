@@ -319,6 +319,8 @@ export default function Modelling() {
                 </p>
               </div>
             </div>
+            {/* Tinggi tabel mengikuti teks di sebelahnya; sisanya digulir di dalam kartu */}
+            <div className="h-[280px] lg:h-auto lg:min-h-[220px] lg:[contain:size] hide-scroll [&>div]:h-full [&>div]:overflow-auto [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead_tr]:!bg-white/95 [&_thead_tr]:backdrop-blur">
             <Table
               dense
               head={["K", "Inertia", "Silhouette", "Davies-Bouldin", "Calinski-Harabasz"]}
@@ -334,6 +336,7 @@ export default function Modelling() {
                 fmt(e.chi, 0),
               ])}
             />
+            </div>
           </div>
         </Panel>
 

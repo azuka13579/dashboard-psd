@@ -41,7 +41,7 @@ export default function Layout() {
           {data && (
             <p className="tabular hidden shrink-0 items-center gap-2 rounded-full bg-white/55 px-3 py-1.5 text-[12px] text-ink-2 ring-1 ring-white/80 md:flex">
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-brand-600" />
-              Data {new Date(data.meta.tanggal).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}, pukul{" "}
+              Data KEREN AWIKWOK {new Date(data.meta.tanggal).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}, pukul{" "}
               {data.meta.waktu.slice(0, 5)}
             </p>
           )}

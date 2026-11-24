@@ -1,7 +1,7 @@
 import type { MetricKey } from "./api";
 
 /** Warna cluster (sudah divalidasi: lightness, chroma, separasi buta warna, kontras). */
-export const CLUSTER_COLORS = ["#B97600", "#4096D8", "#2D5F96"] as const;
+export const CLUSTER_COLORS = ["#F4D35E", "#4096D8", "#2D5F96"] as const;
 
 export const C = {
   navy: "#0F2A44",
@@ -9,7 +9,7 @@ export const C = {
   brand: "#1F63C6",
   brandSoft: "#C3D7F4",
   sky: "#4096D8",
-  amber: "#B97600",
+  amber: "#F4D35E",
   ink: "#13202E",
   ink2: "#4B5A6A",
   ink3: "#7A8796",
@@ -36,9 +36,9 @@ export const fmtMetric = (m: MetricKey, v: number | undefined) => `${fmt(v, METR
 
 export const titleCase = (s: string) => s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 
-/** Ramp sekuensial satu hue (terang -> gelap). Suhu memakai amber, metrik lain memakai biru. */
+/** Ramp sekuensial satu hue (terang -> gelap). Suhu memakai kuning, metrik lain memakai biru. */
 const RAMPS = {
-  warm: ["#F7EBD2", "#E9C27A", "#D29A2C", "#B97600", "#7A4D00"],
+  warm: ["#FAF0CA", "#F7E29A", "#F4D35E", "#D8B13A", "#A9861A"],
   cool: ["#E3EFFA", "#A9CCEC", "#6AA6DC", "#3478BC", "#1A4778"],
 };
 
