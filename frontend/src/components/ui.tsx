@@ -7,7 +7,7 @@ type Tone = "light" | "dark";
 /** Kartu dasar: putih, sudut membulat, bayangan lembut. */
 export function Panel({ children, className = "", pad = true }: { children: ReactNode; className?: string; pad?: boolean }) {
   return (
-    <div className={`rounded-xl border border-line bg-surface shadow-[0_1px_3px_rgba(16,40,80,0.05)] ${pad ? "p-4" : ""} ${className}`}>{children}</div>
+    <div className={`glass relative rounded-3xl ${pad ? "p-5" : ""} ${className}`}>{children}</div>
   );
 }
 
@@ -26,7 +26,7 @@ export function PanelHeader({ title, sub, right, className = "" }: { title: stri
 /** Header kartu untuk Panel pad={false}: judul di kiri, kontrol di kanan, garis tipis di bawah. */
 export function PanelBar({ title, sub, right }: { title: string; sub?: string; right?: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line-2 px-4 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-white/70 px-5 py-3.5">
       <div className="min-w-0">
         <h3 className="text-[14px] font-semibold text-ink">{title}</h3>
         {sub && <p className="text-[12px] text-ink-3">{sub}</p>}
@@ -42,7 +42,7 @@ export function PageHeader({ title, desc, right, children, flush }: { title: str
     <div className={flush ? "mb-3" : "mb-5"}>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="max-w-3xl">
-          <h1 className="text-[20px] font-bold leading-tight text-ink">{title}</h1>
+          <h1 className="text-[26px] font-semibold leading-tight tracking-tight text-ink">{title}</h1>
           {desc && <p className="mt-1 text-[13.5px] leading-relaxed text-ink-3">{desc}</p>}
         </div>
         {right}
@@ -78,9 +78,9 @@ export function KpiStrip({ items }: { items: Kpi[]; tone?: Tone }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-flow-col xl:auto-cols-fr xl:grid-cols-none">
       {items.map((k) => (
-        <div key={k.label} className="rounded-xl border border-line bg-surface px-4 py-3 shadow-[0_1px_3px_rgba(16,40,80,0.05)]">
+        <div key={k.label} className="glass relative rounded-2xl px-4 py-3">
           <p className="text-[12px] font-medium text-ink-3">{k.label}</p>
-          <p className={`tabular mt-1 text-[20px] font-bold leading-tight ${k.accent === "amber" ? "text-amber-700" : "text-ink"}`}>
+          <p className={`tabular mt-1 text-[26px] font-light leading-tight ${k.accent === "amber" ? "text-amber-700" : "text-ink"}`}>
             {k.value}
             {k.unit && <span className="ml-1 text-[12.5px] font-medium text-ink-3">{k.unit}</span>}
           </p>
@@ -107,7 +107,7 @@ export function Segmented<T extends string>({
   tone?: Tone;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="inline-flex flex-wrap gap-0.5 rounded-full bg-[#eef1f6] p-[3px]">
+    <div role="radiogroup" aria-label={label} className="inline-flex flex-wrap gap-0.5 rounded-full bg-white/55 p-[3px] ring-1 ring-white/80 backdrop-blur-sm">
       {options.map((o) => {
         const active = value === o.value;
         return (
@@ -117,7 +117,7 @@ export function Segmented<T extends string>({
             aria-checked={active}
             onClick={() => onChange(o.value)}
             className={`inline-flex items-center gap-1.5 rounded-full font-medium transition-all duration-150 ${size === "sm" ? "px-2.5 py-[3px] text-[12px]" : "px-3.5 py-1.5 text-[13px]"} ${
-              active ? "bg-surface text-brand-700 shadow-[0_1px_3px_rgba(16,40,80,0.14)]" : "text-ink-3 hover:text-ink"
+              active ? "bg-gradient-to-b from-sky-500 to-brand-600 text-white shadow-[0_2px_8px_rgba(31,99,198,0.35)]" : "text-ink-2 hover:text-ink"
             }`}
           >
             {o.label}
@@ -138,19 +138,27 @@ export function Pill({ children, tone = "brand" }: { children: ReactNode; tone?:
 }
 
 /** Cincin persentase (0-100). */
-export function Ring({ value, size = 76, stroke = 7, label }: { value: number; size?: number; stroke?: number; label?: string }) {
+export function Ring({ value, size = 76, stroke = 7, label, tone = "dark" }: { value: number; size?: number; stroke?: number; label?: string; tone?: Tone }) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const v = Math.max(0, Math.min(100, value));
+  const light = tone === "light";
+  const gid = `ring-${size}-${stroke}`;
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth={stroke} />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#fff" strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${(v / 100) * c} ${c}`} />
+        <defs>
+          <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#22d3ee" />
+            <stop offset="100%" stopColor="#1f63c6" />
+          </linearGradient>
+        </defs>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={light ? "rgba(31,99,198,0.12)" : "rgba(255,255,255,0.22)"} strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={light ? `url(#${gid})` : "#fff"} strokeWidth={stroke} strokeLinecap="round" strokeDasharray={`${(v / 100) * c} ${c}`} />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-        <span className="tabular text-[15px] font-bold text-white">{v.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%</span>
-        {label && <span className="mt-1 text-[9.5px] text-white/75">{label}</span>}
+        <span className={`tabular text-[15px] font-semibold ${light ? "text-ink" : "text-white"}`}>{v.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%</span>
+        {label && <span className={`mt-1 text-[9.5px] ${light ? "text-ink-3" : "text-white/75"}`}>{label}</span>}
       </div>
     </div>
   );
@@ -198,7 +206,7 @@ export function ClusterLegend({ clusters, tone = "light" }: { clusters: { id: nu
 }
 
 export function Loading({ h = 200, tone = "light" }: { h?: number; tone?: Tone }) {
-  return <div className={`animate-pulse rounded-lg ${tone === "dark" ? "bg-white/10" : "bg-line-2"}`} style={{ height: h }} />;
+  return <div className={`animate-pulse rounded-lg ${tone === "dark" ? "bg-white/10" : "bg-white/55"}`} style={{ height: h }} />;
 }
 
 export function ErrorBox({ error }: { error: unknown }) {
@@ -212,10 +220,10 @@ export function ErrorBox({ error }: { error: unknown }) {
 export function Table({ head, rows, align, dense }: { head: ReactNode[]; rows: ReactNode[][]; align?: ("l" | "r")[]; dense?: boolean }) {
   const py = dense ? "py-1.5" : "py-2";
   return (
-    <div className="overflow-x-auto rounded-lg border border-line-2">
+    <div className="overflow-x-auto rounded-2xl border border-white/70 bg-white/40">
       <table className="w-full text-[13px]">
         <thead>
-          <tr className="bg-[#f6f8fb] text-left text-[11.5px] uppercase tracking-wide text-ink-3">
+          <tr className="bg-white/55 text-left text-[11.5px] uppercase tracking-wide text-ink-3">
             {head.map((h, i) => (
               <th key={i} className={`px-3 py-2 font-semibold ${align?.[i] === "r" ? "text-right" : ""}`}>
                 {h}
@@ -225,7 +233,7 @@ export function Table({ head, rows, align, dense }: { head: ReactNode[]; rows: R
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-t border-line-2 transition-colors hover:bg-brand-50/60">
+            <tr key={i} className="border-t border-white/70 transition-colors hover:bg-white/60">
               {r.map((c, j) => (
                 <td key={j} className={`px-3 ${py} text-ink ${align?.[j] === "r" ? "tabular text-right" : ""}`}>
                   {c}

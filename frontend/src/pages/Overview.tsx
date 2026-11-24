@@ -53,7 +53,7 @@ export default function Overview() {
       },
       xAxis: { type: "category", data: h.map((b) => fmt((b.x0 + b.x1) / 2, d)), ...axisStyle, axisLabel: { ...axisStyle.axisLabel, hideOverlap: true } },
       yAxis: { type: "value", name: "Jumlah kecamatan", ...axisStyle },
-      series: [{ type: "bar", data: h.map((b) => b.n), barCategoryGap: "10%", itemStyle: { color: C.navy700, borderRadius: [3, 3, 0, 0] } }],
+      series: [{ type: "bar", data: h.map((b) => b.n), barCategoryGap: "10%", itemStyle: { color: { type: "linear", x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: "#7dd3fc" }, { offset: 1, color: C.brand }] }, borderRadius: [6, 6, 0, 0] } }],
     };
   }, [data, edaVar]);
 
@@ -131,7 +131,7 @@ export default function Overview() {
           type: "bar",
           data: rows.map((r) => r[provMetric]),
           barWidth: 9,
-          itemStyle: { color: m.warm ? C.amber : C.navy700, borderRadius: [0, 3, 3, 0] },
+          itemStyle: { color: { type: "linear", x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: "#7dd3fc" }, { offset: 1, color: C.brand }] }, borderRadius: [0, 6, 6, 0] },
           label: { show: true, position: "right", color: C.ink3, fontSize: 10, formatter: (p: any) => fmt(p.value, m.digits) },
         },
       ],
@@ -230,6 +230,7 @@ export default function Overview() {
         />
         <Panel>
           <PanelHeader title="Kamus variabel" sub="Tipe data, jumlah nilai kosong, dan jumlah nilai unik per kolom" />
+          <div className="h-[340px] hide-scroll [&>div]:h-full [&>div]:overflow-auto [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10 [&_thead_tr]:!bg-white/95 [&_thead_tr]:backdrop-blur">
           <Table
             dense
             head={["Kolom", "Deskripsi", "Tipe", "Kosong", "Unik"]}
@@ -242,6 +243,7 @@ export default function Overview() {
               c.unique.toLocaleString("id-ID"),
             ])}
           />
+          </div>
         </Panel>
       </Section>
 
@@ -279,7 +281,7 @@ export default function Overview() {
 
         <div className="grid gap-4 lg:grid-cols-2">
           <Panel>
-            <PanelHeader title="Matriks korelasi Pearson" sub="Biru untuk korelasi negatif, amber untuk korelasi positif" />
+            <PanelHeader title="Matriks korelasi Pearson" sub="Biru untuk korelasi negatif, kuning untuk korelasi positif" />
             <Chart option={corrOption} height={400} />
           </Panel>
           <Panel>

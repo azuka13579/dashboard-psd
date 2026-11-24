@@ -36,8 +36,8 @@ function PointsLayer({ points, colorBy, metric, clusterNames }: Pick<Props, "poi
       L.circleMarker([p.lat, p.lon], {
         renderer,
         radius: 4,
-        weight: byMetric ? 0.7 : 0.6,
-        color: byMetric ? "rgba(15,42,68,0.45)" : "#ffffff",
+        weight: 0.7,
+        color: "rgba(13,59,102,0.45)",
         fillColor: fill,
         fillOpacity: 0.92,
       })
