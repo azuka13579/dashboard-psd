@@ -31,7 +31,7 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 from sklearn.neighbors import BallTree
 
-RAW = Path('../Data hujan benar 2.csv')  # data utama (koordinat versi revisi kedua)
+RAW = Path('../Data hujan fix.csv')      # data utama (koordinat versi revisi terbaru)
 REF = Path('../Data hujan.csv')          # data versi awal, acuan untuk memulihkan format angka koordinat
 OUT = Path('../backend/data'); OUT.mkdir(parents=True, exist_ok=True)
 RANDOM_STATE = 42
